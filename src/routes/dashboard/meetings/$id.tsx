@@ -16,6 +16,7 @@ function MeetingDetails() {
   const { data: meeting, isLoading, error } = useMeeting(id)
   const { data: actions } = useActions(meeting?.clientId, meeting?.dealId)
   const [pendingActions, setPendingActions] = useState<any[]>([])
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
 
   useEffect(() => {
     if (actions && meeting) {
@@ -101,6 +102,7 @@ function MeetingDetails() {
           ) : (
             <Button
               size="sm"
+              disabled={isAnalyzing}
               className="h-8 text-xs bg-purple-600 hover:bg-purple-700"
               onClick={async () => {
                 try {
@@ -108,18 +110,29 @@ function MeetingDetails() {
                     alert("No transcript available to analyze.");
                     return;
                   }
+                  setIsAnalyzing(true);
                   await api('/meeting/analyze', {
                     method: 'POST',
                     body: JSON.stringify({ meetingId: meeting._id, transcript: meeting.transcript })
                   });
-                  window.location.reload(); // Simple reload to fetch new data
+                  window.location.reload();
                 } catch (err) {
                   console.error("Analysis failed", err);
                   alert("Failed to analyze meeting.");
+                } finally {
+                  setIsAnalyzing(false);
                 }
               }}
             >
-              ✨ Analyze with AI
+              {isAnalyzing ? (
+                <>
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" /> Analyzing...
+                </>
+              ) : (
+                <>
+                  ✨ Analyze with AI
+                </>
+              )}
             </Button>
           )}
         </div>
