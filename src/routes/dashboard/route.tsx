@@ -1,5 +1,12 @@
 import { createFileRoute, Outlet, Link } from '@tanstack/react-router'
-import { Bell, User, Calendar, Users, LayoutDashboard } from 'lucide-react'
+import {
+  Bell,
+  User,
+  Calendar,
+  Users,
+  LayoutDashboard,
+  Briefcase,
+} from 'lucide-react'
 
 export const Route = createFileRoute('/dashboard')({
   component: DashboardLayout,
@@ -20,14 +27,19 @@ function DashboardLayout() {
           <div className="mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16">
               <div className="flex-shrink-0 flex items-center">
-                <span className="text-xl font-bold text-gray-900 tracking-tight">MyApp</span>
+                <span className="text-xl font-bold text-gray-900 tracking-tight">
+                  MyApp
+                </span>
               </div>
               <nav className="hidden flex-1 justify-center sm:flex ">
                 <Link
                   to="/dashboard"
                   activeOptions={{ exact: true }}
                   activeProps={{ className: 'border-cyan-500 text-gray-900' }}
-                  inactiveProps={{ className: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700' }}
+                  inactiveProps={{
+                    className:
+                      'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700',
+                  }}
                   className="inline-flex items-center px-8 pt-1 border-b-2 text-base font-medium"
                 >
                   <LayoutDashboard className="w-5 h-5 mr-2" />
@@ -37,7 +49,10 @@ function DashboardLayout() {
                   to="/dashboard/calendar"
                   activeOptions={{ exact: true }}
                   activeProps={{ className: 'border-cyan-500 text-gray-900' }}
-                  inactiveProps={{ className: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700' }}
+                  inactiveProps={{
+                    className:
+                      'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700',
+                  }}
                   className="inline-flex items-center px-8 pt-1 border-b-2 text-base font-medium"
                 >
                   <Calendar className="w-5 h-5 mr-2" />
@@ -47,11 +62,27 @@ function DashboardLayout() {
                   to="/dashboard/clients"
                   activeProps={{ className: 'border-cyan-500 text-gray-900' }}
                   activeOptions={{ exact: true }}
-                  inactiveProps={{ className: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700' }}
+                  inactiveProps={{
+                    className:
+                      'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700',
+                  }}
                   className="inline-flex items-center px-8 pt-1 border-b-2 text-base font-medium"
                 >
                   <Users className="w-5 h-5 mr-2" />
                   Clients
+                </Link>
+                <Link
+                  to="/dashboard/deals"
+                  activeProps={{ className: 'border-cyan-500 text-gray-900' }}
+                  activeOptions={{ exact: true }}
+                  inactiveProps={{
+                    className:
+                      'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700',
+                  }}
+                  className="inline-flex items-center px-8 pt-1 border-b-2 text-base font-medium"
+                >
+                  <Briefcase className="w-5 h-5 mr-2" />
+                  Deals
                 </Link>
               </nav>
               <div className="flex items-center space-x-4">

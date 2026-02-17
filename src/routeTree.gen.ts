@@ -15,7 +15,10 @@ import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as DashboardCalendarRouteImport } from './routes/dashboard/calendar'
+import { Route as DashboardDealsIndexRouteImport } from './routes/dashboard/deals/index'
 import { Route as DashboardClientsIndexRouteImport } from './routes/dashboard/clients/index'
+import { Route as DashboardMeetingsIdRouteImport } from './routes/dashboard/meetings/$id'
+import { Route as DashboardDealsIdRouteImport } from './routes/dashboard/deals/$id'
 import { Route as DashboardClientsIdRouteImport } from './routes/dashboard/clients/$id'
 
 const SignupRoute = SignupRouteImport.update({
@@ -48,9 +51,24 @@ const DashboardCalendarRoute = DashboardCalendarRouteImport.update({
   path: '/calendar',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
+const DashboardDealsIndexRoute = DashboardDealsIndexRouteImport.update({
+  id: '/deals/',
+  path: '/deals/',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
 const DashboardClientsIndexRoute = DashboardClientsIndexRouteImport.update({
   id: '/clients/',
   path: '/clients/',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardMeetingsIdRoute = DashboardMeetingsIdRouteImport.update({
+  id: '/meetings/$id',
+  path: '/meetings/$id',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardDealsIdRoute = DashboardDealsIdRouteImport.update({
+  id: '/deals/$id',
+  path: '/deals/$id',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
 const DashboardClientsIdRoute = DashboardClientsIdRouteImport.update({
@@ -67,7 +85,10 @@ export interface FileRoutesByFullPath {
   '/dashboard/calendar': typeof DashboardCalendarRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/clients/$id': typeof DashboardClientsIdRoute
+  '/dashboard/deals/$id': typeof DashboardDealsIdRoute
+  '/dashboard/meetings/$id': typeof DashboardMeetingsIdRoute
   '/dashboard/clients/': typeof DashboardClientsIndexRoute
+  '/dashboard/deals/': typeof DashboardDealsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -76,7 +97,10 @@ export interface FileRoutesByTo {
   '/dashboard/calendar': typeof DashboardCalendarRoute
   '/dashboard': typeof DashboardIndexRoute
   '/dashboard/clients/$id': typeof DashboardClientsIdRoute
+  '/dashboard/deals/$id': typeof DashboardDealsIdRoute
+  '/dashboard/meetings/$id': typeof DashboardMeetingsIdRoute
   '/dashboard/clients': typeof DashboardClientsIndexRoute
+  '/dashboard/deals': typeof DashboardDealsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -87,7 +111,10 @@ export interface FileRoutesById {
   '/dashboard/calendar': typeof DashboardCalendarRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/clients/$id': typeof DashboardClientsIdRoute
+  '/dashboard/deals/$id': typeof DashboardDealsIdRoute
+  '/dashboard/meetings/$id': typeof DashboardMeetingsIdRoute
   '/dashboard/clients/': typeof DashboardClientsIndexRoute
+  '/dashboard/deals/': typeof DashboardDealsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -99,7 +126,10 @@ export interface FileRouteTypes {
     | '/dashboard/calendar'
     | '/dashboard/'
     | '/dashboard/clients/$id'
+    | '/dashboard/deals/$id'
+    | '/dashboard/meetings/$id'
     | '/dashboard/clients/'
+    | '/dashboard/deals/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -108,7 +138,10 @@ export interface FileRouteTypes {
     | '/dashboard/calendar'
     | '/dashboard'
     | '/dashboard/clients/$id'
+    | '/dashboard/deals/$id'
+    | '/dashboard/meetings/$id'
     | '/dashboard/clients'
+    | '/dashboard/deals'
   id:
     | '__root__'
     | '/'
@@ -118,7 +151,10 @@ export interface FileRouteTypes {
     | '/dashboard/calendar'
     | '/dashboard/'
     | '/dashboard/clients/$id'
+    | '/dashboard/deals/$id'
+    | '/dashboard/meetings/$id'
     | '/dashboard/clients/'
+    | '/dashboard/deals/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -172,11 +208,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardCalendarRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/deals/': {
+      id: '/dashboard/deals/'
+      path: '/deals'
+      fullPath: '/dashboard/deals/'
+      preLoaderRoute: typeof DashboardDealsIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
     '/dashboard/clients/': {
       id: '/dashboard/clients/'
       path: '/clients'
       fullPath: '/dashboard/clients/'
       preLoaderRoute: typeof DashboardClientsIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/meetings/$id': {
+      id: '/dashboard/meetings/$id'
+      path: '/meetings/$id'
+      fullPath: '/dashboard/meetings/$id'
+      preLoaderRoute: typeof DashboardMeetingsIdRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/deals/$id': {
+      id: '/dashboard/deals/$id'
+      path: '/deals/$id'
+      fullPath: '/dashboard/deals/$id'
+      preLoaderRoute: typeof DashboardDealsIdRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
     '/dashboard/clients/$id': {
@@ -193,14 +250,20 @@ interface DashboardRouteRouteChildren {
   DashboardCalendarRoute: typeof DashboardCalendarRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
   DashboardClientsIdRoute: typeof DashboardClientsIdRoute
+  DashboardDealsIdRoute: typeof DashboardDealsIdRoute
+  DashboardMeetingsIdRoute: typeof DashboardMeetingsIdRoute
   DashboardClientsIndexRoute: typeof DashboardClientsIndexRoute
+  DashboardDealsIndexRoute: typeof DashboardDealsIndexRoute
 }
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardCalendarRoute: DashboardCalendarRoute,
   DashboardIndexRoute: DashboardIndexRoute,
   DashboardClientsIdRoute: DashboardClientsIdRoute,
+  DashboardDealsIdRoute: DashboardDealsIdRoute,
+  DashboardMeetingsIdRoute: DashboardMeetingsIdRoute,
   DashboardClientsIndexRoute: DashboardClientsIndexRoute,
+  DashboardDealsIndexRoute: DashboardDealsIndexRoute,
 }
 
 const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(

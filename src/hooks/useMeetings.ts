@@ -3,24 +3,27 @@ import { api } from '../lib/api'
 
 export interface Meeting {
   _id: string
-  clientId: string
   title: string
-  date: string
-  duration: number
-  notes: string
-  outcome?: string
+  clientId: string
+  dealId?: string
+  dateTime: string
+  transcript: string
+  aiSummary: string
+  aiInsights: any
+  participants: string[]
   createdAt: string
   updatedAt: string
 }
 
-export const useMeetings = (clientId: string) => {
+export const useMeetings = (clientId?: string, dealId?: string) => {
   return useQuery({
-    queryKey: ['meetings', clientId],
+    queryKey: ['meetings', clientId || dealId],
     queryFn: async () => {
-      const response = await api(`/meeting?clientId=${clientId}`)
+      const params = dealId ? `dealId=${dealId}` : `clientId=${clientId}`
+      const response = await api(`/meeting?${params}`)
       return response.data as Meeting[]
     },
-    enabled: !!clientId,
+    enabled: !!(clientId || dealId),
   })
 }
 
@@ -54,23 +57,40 @@ export const useCalendar = () => {
 
 export interface Action {
   _id: string
+  meetingId: string
   clientId: string
+  dealId?: string
+  type: string
   title: string
   description: string
-  dueDate?: string
+  suggestedData: any
   status: 'pending' | 'completed' | 'overdue'
+  source: 'ai' | 'manual'
   priority: 'low' | 'medium' | 'high'
+  userId: string
   createdAt: string
   updatedAt: string
 }
 
-export const useActions = (clientId: string) => {
+export const useActions = (clientId?: string, dealId?: string) => {
   return useQuery({
-    queryKey: ['actions', clientId],
+    queryKey: ['actions', clientId || dealId],
     queryFn: async () => {
-      const response = await api(`/actions?clientId=${clientId}`)
+      const params = dealId ? `dealId=${dealId}` : `clientId=${clientId}`
+      const response = await api(`/action?${params}`)
       return response.data as Action[]
     },
-    enabled: !!clientId,
+    enabled: !!(clientId || dealId),
+  })
+}
+
+export const useMeeting = (id: string) => {
+  return useQuery({
+    queryKey: ['meeting', id],
+    queryFn: async () => {
+      const response = await api(`/meeting/${id}`)
+      return response.data as Meeting
+    },
+    enabled: !!id,
   })
 }
