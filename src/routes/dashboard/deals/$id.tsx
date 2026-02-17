@@ -1,5 +1,6 @@
 import { createFileRoute, useParams, useNavigate } from '@tanstack/react-router'
-import { useDeal, useMeetings, useActions } from '../../../hooks/useDeals'
+import { useDeal } from '../../../hooks/useDeals'
+import { useMeetings } from '../../../hooks/useMeetings'
 import {
   ArrowLeft,
   Calendar,
@@ -217,11 +218,10 @@ function DealDetails() {
                     className="flex items-start gap-4 p-4 border border-gray-100 rounded-lg"
                   >
                     <div
-                      className={`h-6 w-6 rounded-full flex items-center justify-center ${
-                        action.status === 'completed'
-                          ? 'bg-green-100'
-                          : 'bg-gray-100'
-                      }`}
+                      className={`h-6 w-6 rounded-full flex items-center justify-center ${action.status === 'completed'
+                        ? 'bg-green-100'
+                        : 'bg-gray-100'
+                        }`}
                     >
                       {action.status === 'completed' ? (
                         <CheckCircle className="h-4 w-4 text-green-600" />
@@ -238,24 +238,22 @@ function DealDetails() {
                       </p>
                       <div className="flex items-center gap-2 mt-2">
                         <span
-                          className={`px-2 py-1 text-xs rounded-full ${
-                            action.priority === 'high'
-                              ? 'bg-red-100 text-red-800'
-                              : action.priority === 'medium'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-green-100 text-green-800'
-                          }`}
+                          className={`px-2 py-1 text-xs rounded-full ${action.priority === 'high'
+                            ? 'bg-red-100 text-red-800'
+                            : action.priority === 'medium'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-green-100 text-green-800'
+                            }`}
                         >
                           {action.priority}
                         </span>
                         <span
-                          className={`px-2 py-1 text-xs rounded-full ${
-                            action.status === 'completed'
-                              ? 'bg-green-100 text-green-800'
-                              : action.status === 'overdue'
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-blue-100 text-blue-800'
-                          }`}
+                          className={`px-2 py-1 text-xs rounded-full ${action.status === 'completed'
+                            ? 'bg-green-100 text-green-800'
+                            : action.status === 'overdue'
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-blue-100 text-blue-800'
+                            }`}
                         >
                           {action.status}
                         </span>
@@ -287,11 +285,10 @@ function DealDetails() {
                     className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
-                      className={`max-w-xs p-3 rounded-lg ${
-                        msg.role === 'user'
-                          ? 'bg-cyan-600 text-white'
-                          : 'bg-white text-gray-900 border border-gray-200'
-                      }`}
+                      className={`max-w-xs p-3 rounded-lg ${msg.role === 'user'
+                        ? 'bg-cyan-600 text-white'
+                        : 'bg-white text-gray-900 border border-gray-200'
+                        }`}
                     >
                       {msg.content}
                     </div>

@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { Plus, Search, Loader2 } from 'lucide-react'
 import { useDeals } from '../../../hooks/useDeals'
 import { useState } from 'react'
@@ -12,6 +12,7 @@ import { AddDealModal } from '../../../components/AddDealModal'
 function Deals() {
   const { data: deals, isLoading, error } = useDeals()
   const [isAddDealOpen, setIsAddDealOpen] = useState(false)
+  const navigate = useNavigate()
 
   return (
     <div className="space-y-6">
@@ -90,6 +91,7 @@ function Deals() {
                   <tr
                     key={deal._id}
                     className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => navigate({ to: '/dashboard/deals/$id', params: { id: deal._id } })}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">

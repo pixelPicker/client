@@ -10,13 +10,20 @@ export const Route = createFileRoute('/dashboard/meetings/$id')({
   component: MeetingDetails,
 })
 
+import { AIChatWidget } from '../../../components/AIChatWidget'
+import { Sparkles } from 'lucide-react'
+
+// ... existing code ...
+
 function MeetingDetails() {
   const { id } = useParams({ from: '/dashboard/meetings/$id' })
   const navigate = useNavigate()
   const { data: meeting, isLoading, error } = useMeeting(id)
-  const { data: actions } = useActions(meeting?.clientId, meeting?.dealId)
+  // meeting.clientId is populated, so we need to access ._id
+  const { data: actions } = useActions(meeting?.clientId?._id || meeting?.clientId, meeting?.dealId?._id || meeting?.dealId)
   const [pendingActions, setPendingActions] = useState<any[]>([])
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [isChatOpen, setIsChatOpen] = useState(false)
 
   useEffect(() => {
     if (actions && meeting) {
@@ -95,6 +102,16 @@ function MeetingDetails() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 text-xs border-purple-200 text-purple-700 hover:bg-purple-50"
+            onClick={() => setIsChatOpen(!isChatOpen)}
+          >
+            <Sparkles className="h-3 w-3 mr-1.5" />
+            {isChatOpen ? 'Close Chat' : 'Ask AI'}
+          </Button>
+
           {Object.keys(insights).length > 0 ? (
             <span className="bg-cyan-50 text-cyan-700 text-xs px-2 py-1 rounded-full font-medium border border-cyan-100 flex items-center gap-1">
               <CheckCircle className="h-3 w-3" /> AI Analyzed
@@ -306,6 +323,12 @@ function MeetingDetails() {
 
         </div>
       </div>
+
+      <AIChatWidget
+        meetingId={meeting._id}
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+      />
     </div>
   )
 }
