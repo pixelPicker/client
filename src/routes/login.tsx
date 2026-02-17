@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import Header from '../components/Header'
@@ -7,18 +7,21 @@ export const Route = createFileRoute('/login')({
     component: Login,
 })
 
+import { useLogin } from '../hooks/useAuth'
+
+// ... existing imports
+
 function Login() {
-    const navigate = useNavigate()
-    const [isLoading, setIsLoading] = useState(false)
+    const { mutate: login, isPending: isLoading, error } = useLogin()
     const [showPassword, setShowPassword] = useState(false)
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        setIsLoading(true)
-        // Simulate login delay
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-        setIsLoading(false)
-        navigate({ to: '/dashboard' })
+        const formData = new FormData(e.currentTarget as HTMLFormElement)
+        const email = formData.get('email') as string
+        const password = formData.get('password') as string
+
+        login({ email, password })
     }
 
     return (
@@ -34,6 +37,11 @@ function Login() {
                     </p>
                 </div>
                 <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+                    {error && (
+                        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
+                            {(error as any).message || 'An error occurred'}
+                        </div>
+                    )}
                     <div className="space-y-4">
                         <div>
                             <label htmlFor="email-address" className="block font-medium text-gray-700">
