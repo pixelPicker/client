@@ -17,10 +17,38 @@ export const useMeetings = (clientId: string) => {
   return useQuery({
     queryKey: ['meetings', clientId],
     queryFn: async () => {
-      const response = await api(`/meetings?clientId=${clientId}`)
+      const response = await api(`/meeting?clientId=${clientId}`)
       return response.data as Meeting[]
     },
     enabled: !!clientId,
+  })
+}
+
+export const useCreateMeeting = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (newMeeting: Partial<Meeting>) => {
+      const response = await api('/meeting', {
+        method: 'POST',
+        body: JSON.stringify(newMeeting),
+      })
+      return response.data as Meeting
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['calendar'] })
+      queryClient.invalidateQueries({ queryKey: ['meetings'] })
+    },
+  })
+}
+
+export const useCalendar = () => {
+  return useQuery({
+    queryKey: ['calendar'],
+    queryFn: async () => {
+      const response = await api('/meeting/calendar')
+      return response.data as Meeting[]
+    },
   })
 }
 
