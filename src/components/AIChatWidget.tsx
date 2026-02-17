@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Send, Bot, User, Loader2, Sparkles, X } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
 import { api } from '../lib/api'
 import { Button } from './ui/button'
 
@@ -112,7 +113,11 @@ export function AIChatWidget({ meetingId, isOpen, onClose }: AIChatWidgetProps) 
                             ? 'bg-purple-600 text-white rounded-tr-none'
                             : 'bg-white border border-gray-200 text-gray-800 rounded-tl-none shadow-sm'
                             }`}>
-                            {msg.content}
+                            <div className="prose prose-sm max-w-none dark:prose-invert">
+                                <ReactMarkdown>
+                                    {msg.content}
+                                </ReactMarkdown>
+                            </div>
                         </div>
                     </div>
                 ))}

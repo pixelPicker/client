@@ -1,5 +1,11 @@
 import { createFileRoute, useParams, useNavigate } from '@tanstack/react-router'
 import { ArrowLeft, Users, Calendar, Loader2, CheckCircle, AlertTriangle, Clock, ArrowRight, X } from 'lucide-react'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '../../../components/ui/tooltip'
 import { useMeeting } from '../../../hooks/useMeetings'
 import { useActions } from '../../../hooks/useMeetings'
 import { useState, useEffect } from 'react'
@@ -11,6 +17,8 @@ export const Route = createFileRoute('/dashboard/meetings/$id')({
 })
 
 import { AIChatWidget } from '../../../components/AIChatWidget'
+import { AddMeetingModal } from '../../../components/AddMeetingModal'
+import { EmailComposerModal } from '../../../components/EmailComposerModal'
 import { Sparkles } from 'lucide-react'
 
 // ... existing code ...
@@ -20,10 +28,20 @@ function MeetingDetails() {
   const navigate = useNavigate()
   const { data: meeting, isLoading, error } = useMeeting(id)
   // meeting.clientId is populated, so we need to access ._id
-  const { data: actions } = useActions(meeting?.clientId?._id || meeting?.clientId, meeting?.dealId?._id || meeting?.dealId)
+  const { data: actions } = useActions(
+    (meeting?.clientId as any)?._id || meeting?.clientId,
+    (meeting?.dealId as any)?._id || meeting?.dealId,
+  )
   const [pendingActions, setPendingActions] = useState<any[]>([])
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(false)
+
+  const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false)
+  const [meetingModalData, setMeetingModalData] = useState<any>(null)
+  const [selectedActionId, setSelectedActionId] = useState<string | null>(null)
+
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false)
+  const [emailModalData, setEmailModalData] = useState<any>(null)
 
   useEffect(() => {
     if (actions && meeting) {
@@ -38,8 +56,23 @@ function MeetingDetails() {
   }, [actions, meeting])
 
   const handleAction = async (actionId: string, type: 'approve' | 'reject') => {
+    if (!meeting) return;
     try {
       if (type === 'approve') {
+        const action = pendingActions.find(a => a._id === actionId);
+        if (action && action.type === 'schedule') {
+          setMeetingModalData({
+            title: action.suggestedData.title,
+            dateTime: action.suggestedData.dateTime,
+            clientId: (meeting.clientId as any)._id,
+            dealId: (meeting.dealId as any)?._id,
+            notes: `Follow-up from meeting: ${meeting.title}`
+          });
+          setSelectedActionId(actionId);
+          setIsMeetingModalOpen(true);
+          return;
+        }
+
         await api('/action/confirm', {
           method: 'POST',
           body: JSON.stringify({ actionId }),
@@ -80,7 +113,7 @@ function MeetingDetails() {
       <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shrink-0 z-10">
         <div className="flex items-center gap-4">
           <button
-            onClick={() => navigate({ to: -1 })}
+            onClick={() => navigate({ to: '..' })}
             className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 hover:text-gray-900"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -102,15 +135,29 @@ function MeetingDetails() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 text-xs border-purple-200 text-purple-700 hover:bg-purple-50"
-            onClick={() => setIsChatOpen(!isChatOpen)}
-          >
-            <Sparkles className="h-3 w-3 mr-1.5" />
-            {isChatOpen ? 'Close Chat' : 'Ask AI'}
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs border-purple-200 text-purple-700 hover:bg-purple-50"
+                    onClick={() => setIsChatOpen(!isChatOpen)}
+                    disabled={!meeting.transcript}
+                  >
+                    <Sparkles className="h-3 w-3 mr-1.5" />
+                    {isChatOpen ? 'Close Chat' : 'Ask AI'}
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              {!meeting.transcript && (
+                <TooltipContent>
+                  <p>No transcript available for analysis</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
 
           {Object.keys(insights).length > 0 ? (
             <span className="bg-cyan-50 text-cyan-700 text-xs px-2 py-1 rounded-full font-medium border border-cyan-100 flex items-center gap-1">
@@ -185,7 +232,9 @@ function MeetingDetails() {
                 <div key={action._id} className="bg-white border-l-4 border-cyan-500 rounded-r-lg shadow-sm p-4 animate-in fade-in slide-in-from-bottom-2">
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-medium text-gray-900 text-sm">
-                      {action.type === 'schedule' ? '📅 Schedule Follow-up' : '🚀 Update Deal Stage'}
+                      {action.type === 'schedule' ? '📅 Schedule Follow-up' :
+                        action.type === 'stage_update' ? '🚀 Update Deal Stage' :
+                          action.type === 'email' ? '✉️ Send Email' : 'Action Required'}
                     </h3>
                     <span className="bg-cyan-100 text-cyan-800 text-[10px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wide">AI</span>
                   </div>
@@ -193,7 +242,11 @@ function MeetingDetails() {
                   <p className="text-sm text-gray-600 mb-4">
                     {action.type === 'schedule'
                       ? `Proposed: ${action.suggestedData.title} on ${new Date(action.suggestedData.dateTime).toLocaleDateString()} at ${new Date(action.suggestedData.dateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                      : `Move deal to "${action.suggestedData.proposedStage}" phase based on positive signals.`
+                      : action.type === 'stage_update'
+                        ? `Move deal to "${action.suggestedData.proposedStage}" phase based on positive signals.`
+                        : action.type === 'email'
+                          ? `Draft email to client about: ${action.suggestedData.task}`
+                          : action.suggestedData.task
                     }
                   </p>
 
@@ -250,24 +303,25 @@ function MeetingDetails() {
               <h3 className="text-sm font-semibold text-gray-900">Outcome & Next Steps</h3>
             </div>
             <div className="p-4 space-y-4">
-              {insights.nextStep && (
-                <div className="flex gap-3">
-                  <ArrowRight className="h-4 w-4 text-cyan-600 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-xs text-gray-500 font-medium">NEXT STEP</p>
-                    <p className="text-sm text-gray-700">{insights.nextStep}</p>
-                  </div>
+              <div className="flex gap-3">
+                <ArrowRight className="h-4 w-4 text-cyan-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs text-gray-500 font-medium">NEXT STEP</p>
+                  <p className="text-sm text-gray-700">
+                    {typeof insights.nextStep === 'string' ? insights.nextStep : JSON.stringify(insights.nextStep) || 'No next step identified.'}
+                  </p>
                 </div>
-              )}
-              {insights.timeline && (
-                <div className="flex gap-3">
-                  <Clock className="h-4 w-4 text-cyan-600 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-xs text-gray-500 font-medium">TIMELINE</p>
-                    <p className="text-sm text-gray-700">{insights.timeline}</p>
-                  </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Clock className="h-4 w-4 text-cyan-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs text-gray-500 font-medium">TIMELINE</p>
+                  <p className="text-sm text-gray-700">
+                    {typeof insights.timeline === 'string' ? insights.timeline : JSON.stringify(insights.timeline) || 'No timeline identified.'}
+                  </p>
                 </div>
-              )}
+              </div>
             </div>
           </div>
 
@@ -328,6 +382,20 @@ function MeetingDetails() {
         meetingId={meeting._id}
         isOpen={isChatOpen}
         onClose={() => setIsChatOpen(false)}
+      />
+
+      <AddMeetingModal
+        open={isMeetingModalOpen}
+        onOpenChange={setIsMeetingModalOpen}
+        initialData={meetingModalData}
+        onMeetingCreated={() => {
+          // If created manually via modal, we remove the pending action
+          if (selectedActionId) {
+            api(`/action/${selectedActionId}`, { method: 'DELETE' })
+              .then(() => setPendingActions((prev) => prev.filter((a) => a._id !== selectedActionId)))
+              .catch(e => console.error("Failed to delete action", e));
+          }
+        }}
       />
     </div>
   )

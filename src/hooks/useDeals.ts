@@ -17,12 +17,24 @@ export interface Deal {
     updatedAt: string
 }
 
-export const useDeals = () => {
+export interface PaginatedDeals {
+    data: Deal[]
+    total: number
+    totalPages: number
+    currentPage: number
+}
+
+export const useDeals = (search = '', page = 1, limit = 10) => {
     return useQuery({
-        queryKey: ['deals'],
+        queryKey: ['deals', search, page, limit],
         queryFn: async () => {
-            const response = await api('/deal')
-            return response.data as Deal[]
+            const queryParams = new URLSearchParams({
+                search,
+                page: page.toString(),
+                limit: limit.toString(),
+            })
+            const response = await api(`/deal?${queryParams}`)
+            return response as unknown as PaginatedDeals
         },
     })
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Loader2, Save } from 'lucide-react'
 import { useCreateMeeting } from '../hooks/useMeetings'
 import { useContacts } from '../hooks/useContacts'
@@ -17,9 +17,17 @@ import { Input } from './ui/input'
 interface AddMeetingModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  initialData?: {
+    title?: string
+    dateTime?: string
+    clientId?: string
+    dealId?: string
+    notes?: string
+  }
+  onMeetingCreated?: (meeting: any) => void
 }
 
-export function AddMeetingModal({ open, onOpenChange }: AddMeetingModalProps) {
+export function AddMeetingModal({ open, onOpenChange, initialData, onMeetingCreated }: AddMeetingModalProps) {
   const {
     mutate: createMeeting,
     isPending: isLoading,
@@ -28,6 +36,7 @@ export function AddMeetingModal({ open, onOpenChange }: AddMeetingModalProps) {
   const { data: contacts } = useContacts()
   const { data: deals } = useDeals()
 
+  // Use useEffect to update form data when initialData changes or modal opens
   const [formData, setFormData] = useState({
     title: '',
     clientId: '',
@@ -36,14 +45,30 @@ export function AddMeetingModal({ open, onOpenChange }: AddMeetingModalProps) {
     notes: '',
   })
 
+  // Effect to reset/init form when open/initialData changes
+  // We need this because initialData might change while component is mounted
+  // But we only want to set it when opening
+  useEffect(() => {
+    if (open) {
+      setFormData({
+        title: initialData?.title || '',
+        clientId: initialData?.clientId || '',
+        dealId: initialData?.dealId || '',
+        dateTime: initialData?.dateTime ? new Date(initialData.dateTime).toISOString().slice(0, 16) : '', // Format for datetime-local
+        notes: initialData?.notes || '',
+      })
+    }
+  }, [open, initialData])
+
   const availableDeals =
     deals?.filter((d) => d.clientId._id === formData.clientId) || []
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     createMeeting(formData, {
-      onSuccess: () => {
+      onSuccess: (data) => {
         onOpenChange(false)
+        if (onMeetingCreated) onMeetingCreated(data);
         setFormData({
           title: '',
           clientId: '',

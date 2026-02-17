@@ -1,6 +1,6 @@
 import { createFileRoute, useParams, useNavigate } from '@tanstack/react-router'
 import { useDeal } from '../../../hooks/useDeals'
-import { useMeetings } from '../../../hooks/useMeetings'
+import { useMeetings, useActions } from '../../../hooks/useMeetings'
 import {
   ArrowLeft,
   Calendar,
@@ -10,13 +10,14 @@ import {
   CheckCircle,
   Send,
 } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
 import { useState } from 'react'
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from '../../../components/ui/tabs'
+} from '@/components/ui/tabs'
 import { api } from '../../../lib/api'
 
 export const Route = createFileRoute('/dashboard/deals/$id')({
@@ -88,7 +89,7 @@ function DealDetails() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button
-            onClick={() => navigate({ to: '/dashboard/deals' })}
+            onClick={() => navigate({ to: '..' })}
             className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -290,7 +291,11 @@ function DealDetails() {
                         : 'bg-white text-gray-900 border border-gray-200'
                         }`}
                     >
-                      {msg.content}
+                      <div className="prose prose-sm max-w-none dark:prose-invert text-inherit">
+                        <ReactMarkdown>
+                          {msg.content}
+                        </ReactMarkdown>
+                      </div>
                     </div>
                   </div>
                 ))

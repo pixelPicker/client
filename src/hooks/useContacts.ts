@@ -20,25 +20,37 @@ export interface Contact {
     updatedAt: string
 }
 
-export const useContacts = () => {
+export interface PaginatedContacts {
+    data: Contact[]
+    total: number
+    totalPages: number
+    currentPage: number
+}
+
+export const useContacts = (search = '', page = 1, limit = 10) => {
     return useQuery({
-        queryKey: ['contacts'],
+        queryKey: ['contacts', search, page, limit],
         queryFn: async () => {
-            const response = await api('/contact')
-            return response.data as Contact[]
+            const queryParams = new URLSearchParams({
+                search,
+                page: page.toString(),
+                limit: limit.toString(),
+            })
+            const response = await api(`/contact?${queryParams}`)
+            return response as unknown as PaginatedContacts
         },
     })
 }
 
 export const useContact = (id: string) => {
-  return useQuery({
-    queryKey: ['contact', id],
-    queryFn: async () => {
-      const response = await api(`/contact/${id}`)
-      return response.data as Contact
-    },
-    enabled: !!id,
-  })
+    return useQuery({
+        queryKey: ['contact', id],
+        queryFn: async () => {
+            const response = await api(`/contact/${id}`)
+            return response.data as Contact
+        },
+        enabled: !!id,
+    })
 }
 
 export const useCreateContact = () => {
