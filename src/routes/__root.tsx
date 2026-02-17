@@ -8,7 +8,7 @@ import { TanStackDevtools } from '@tanstack/react-devtools'
 
 import Header from '../components/Header'
 
-import TanStackQueryProvider from '../integrations/tanstack-query/root-provider'
+import { QueryClientProvider } from '@tanstack/react-query'
 
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
 
@@ -16,11 +16,12 @@ import PostHogProvider from '../integrations/posthog/provider'
 
 import appCss from '../styles.css?url'
 
-import type { QueryClient } from '@tanstack/react-query'
+import { QueryClient } from '@tanstack/react-query'
 
 interface MyRouterContext {
   queryClient: QueryClient
 }
+const queryClient = new QueryClient()
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
   head: () => ({
@@ -41,6 +42,19 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         rel: 'stylesheet',
         href: appCss,
       },
+      {
+        rel: 'preconnect',
+        href: 'https://fonts.googleapis.com',
+      },
+      {
+        rel: 'preconnect',
+        href: 'https://fonts.gstatic.com',
+        crossOrigin: 'anonymous',
+      },
+      {
+        href: 'https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap',
+        rel: 'stylesheet',
+      },
     ],
   }),
   shellComponent: RootDocument,
@@ -53,10 +67,12 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <TanStackQueryProvider>
+        <QueryClientProvider client={queryClient}>
           <PostHogProvider>
             <Header />
-            {children}
+            <main>
+              {children}
+            </main>
             <TanStackDevtools
               config={{
                 position: 'bottom-right',
@@ -70,7 +86,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               ]}
             />
           </PostHogProvider>
-        </TanStackQueryProvider>
+        </QueryClientProvider>
         <Scripts />
       </body>
     </html>
