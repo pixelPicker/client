@@ -30,6 +30,17 @@ export const useContacts = () => {
     })
 }
 
+export const useContact = (id: string) => {
+  return useQuery({
+    queryKey: ['contact', id],
+    queryFn: async () => {
+      const response = await api(`/contact/${id}`)
+      return response.data as Contact
+    },
+    enabled: !!id,
+  })
+}
+
 export const useCreateContact = () => {
     const queryClient = useQueryClient()
 

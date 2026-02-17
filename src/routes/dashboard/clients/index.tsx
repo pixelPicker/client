@@ -1,10 +1,10 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { Plus, Search, Loader2 } from 'lucide-react'
-import { useContacts, useDeleteContact } from '../../hooks/useContacts'
+import { useContacts, useDeleteContact } from '../../../hooks/useContacts'
 import { useState } from 'react'
-import { AddClientModal } from '../../components/AddClientModal'
+import { AddClientModal } from '../../../components/AddClientModal'
 
-export const Route = createFileRoute('/dashboard/clients')({
+export const Route = createFileRoute('/dashboard/clients/')({
   component: Clients,
 })
 
@@ -13,6 +13,7 @@ function Clients() {
   const { mutate: deleteContact } = useDeleteContact()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const navigate = useNavigate()
 
   const handleDelete = (id: string) => {
     if (window.confirm('Are you sure you want to delete this client?')) {
@@ -29,7 +30,9 @@ function Clients() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Clients</h1>
-          <p className="text-gray-600">Manage your contacts and deal progress</p>
+          <p className="text-gray-600">
+            Manage your contacts and deal progress
+          </p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
@@ -70,7 +73,9 @@ function Clients() {
                 <Plus className="h-6 w-6 text-gray-400" />
               </div>
               <p className="text-gray-900 font-medium">No clients found</p>
-              <p className="text-gray-500 text-sm mt-1">Get started by adding your first client</p>
+              <p className="text-gray-500 text-sm mt-1">
+                Get started by adding your first client
+              </p>
               <button
                 onClick={() => setIsModalOpen(true)}
                 className="mt-4 inline-flex items-center text-cyan-600 hover:text-cyan-700 font-medium text-sm cursor-pointer"
@@ -82,33 +87,59 @@ function Clients() {
             <table className="w-full">
               <thead className="bg-gray-50 text-left border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Client</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Value</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Last Contact</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Actions</th>
+                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Client
+                  </th>
+                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Value
+                  </th>
+                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Last Contact
+                  </th>
+                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {clients.map((client) => (
-                  <tr key={client._id} className="hover:bg-gray-50 transition-colors">
+                  <tr
+                    key={client._id}
+                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() =>
+                      navigate({ to: `/dashboard/clients/${client._id}` })
+                    }
+                  >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="h-10 w-10 flex-shrink-0 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-700 font-bold">
                           {client.name.charAt(0)}
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{client.name}</div>
-                          <div className="text-sm text-gray-500">{client.company}</div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {client.name}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {client.company}
+                          </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${client.dealStage === 'Closed Won' ? 'bg-green-100 text-green-800' :
-                          client.dealStage === 'Negotiation' ? 'bg-blue-100 text-blue-800' :
-                            client.dealStage === 'Lost' ? 'bg-red-100 text-red-800' :
-                              'bg-gray-100 text-gray-800'
-                        }`}>
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          client.dealStage === 'Closed Won'
+                            ? 'bg-green-100 text-green-800'
+                            : client.dealStage === 'Negotiation'
+                              ? 'bg-blue-100 text-blue-800'
+                              : client.dealStage === 'Lost'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
                         {client.dealStage}
                       </span>
                     </td>
@@ -118,10 +149,14 @@ function Clients() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {client.lastContactedAt ? new Date(client.lastContactedAt).toLocaleDateString() : 'Never'}
+                      {client.lastContactedAt
+                        ? new Date(client.lastContactedAt).toLocaleDateString()
+                        : 'Never'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button className="text-cyan-600 hover:text-cyan-900 mr-4 cursor-pointer">Edit</button>
+                      <button className="text-cyan-600 hover:text-cyan-900 mr-4 cursor-pointer">
+                        Edit
+                      </button>
                       <button
                         onClick={() => handleDelete(client._id)}
                         disabled={deletingId === client._id}

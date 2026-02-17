@@ -14,8 +14,9 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
-import { Route as DashboardClientsRouteImport } from './routes/dashboard/clients'
 import { Route as DashboardCalendarRouteImport } from './routes/dashboard/calendar'
+import { Route as DashboardClientsIndexRouteImport } from './routes/dashboard/clients/index'
+import { Route as DashboardClientsIdRouteImport } from './routes/dashboard/clients/$id'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -42,14 +43,19 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
-const DashboardClientsRoute = DashboardClientsRouteImport.update({
-  id: '/clients',
-  path: '/clients',
-  getParentRoute: () => DashboardRouteRoute,
-} as any)
 const DashboardCalendarRoute = DashboardCalendarRouteImport.update({
   id: '/calendar',
   path: '/calendar',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardClientsIndexRoute = DashboardClientsIndexRouteImport.update({
+  id: '/clients/',
+  path: '/clients/',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardClientsIdRoute = DashboardClientsIdRouteImport.update({
+  id: '/clients/$id',
+  path: '/clients/$id',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
 
@@ -59,16 +65,18 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/dashboard/calendar': typeof DashboardCalendarRoute
-  '/dashboard/clients': typeof DashboardClientsRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/clients/$id': typeof DashboardClientsIdRoute
+  '/dashboard/clients/': typeof DashboardClientsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/dashboard/calendar': typeof DashboardCalendarRoute
-  '/dashboard/clients': typeof DashboardClientsRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/dashboard/clients/$id': typeof DashboardClientsIdRoute
+  '/dashboard/clients': typeof DashboardClientsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -77,8 +85,9 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/dashboard/calendar': typeof DashboardCalendarRoute
-  '/dashboard/clients': typeof DashboardClientsRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/clients/$id': typeof DashboardClientsIdRoute
+  '/dashboard/clients/': typeof DashboardClientsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -88,16 +97,18 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/dashboard/calendar'
-    | '/dashboard/clients'
     | '/dashboard/'
+    | '/dashboard/clients/$id'
+    | '/dashboard/clients/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
     | '/signup'
     | '/dashboard/calendar'
-    | '/dashboard/clients'
     | '/dashboard'
+    | '/dashboard/clients/$id'
+    | '/dashboard/clients'
   id:
     | '__root__'
     | '/'
@@ -105,8 +116,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/dashboard/calendar'
-    | '/dashboard/clients'
     | '/dashboard/'
+    | '/dashboard/clients/$id'
+    | '/dashboard/clients/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -153,13 +165,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
-    '/dashboard/clients': {
-      id: '/dashboard/clients'
-      path: '/clients'
-      fullPath: '/dashboard/clients'
-      preLoaderRoute: typeof DashboardClientsRouteImport
-      parentRoute: typeof DashboardRouteRoute
-    }
     '/dashboard/calendar': {
       id: '/dashboard/calendar'
       path: '/calendar'
@@ -167,19 +172,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardCalendarRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/clients/': {
+      id: '/dashboard/clients/'
+      path: '/clients'
+      fullPath: '/dashboard/clients/'
+      preLoaderRoute: typeof DashboardClientsIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/clients/$id': {
+      id: '/dashboard/clients/$id'
+      path: '/clients/$id'
+      fullPath: '/dashboard/clients/$id'
+      preLoaderRoute: typeof DashboardClientsIdRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
   }
 }
 
 interface DashboardRouteRouteChildren {
   DashboardCalendarRoute: typeof DashboardCalendarRoute
-  DashboardClientsRoute: typeof DashboardClientsRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardClientsIdRoute: typeof DashboardClientsIdRoute
+  DashboardClientsIndexRoute: typeof DashboardClientsIndexRoute
 }
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardCalendarRoute: DashboardCalendarRoute,
-  DashboardClientsRoute: DashboardClientsRoute,
   DashboardIndexRoute: DashboardIndexRoute,
+  DashboardClientsIdRoute: DashboardClientsIdRoute,
+  DashboardClientsIndexRoute: DashboardClientsIndexRoute,
 }
 
 const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(
