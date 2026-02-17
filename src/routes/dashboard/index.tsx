@@ -1,17 +1,14 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/dashboard/')({
   component: RouteComponent,
 })
 
 import {
-  Users,
-  Briefcase,
-  Calendar as CalendarIcon,
   ArrowUpRight,
-  ArrowDownRight,
   Loader2,
 } from 'lucide-react'
+import { CalendarWidget } from '../../components/CalendarWidget'
 import { useContacts } from '../../hooks/useContacts'
 import { useDeals } from '../../hooks/useDeals'
 import { useCalendar } from '../../hooks/useMeetings'
@@ -134,13 +131,12 @@ function RouteComponent() {
         </div>
       </div>
 
+
       {/* Calendar Section - Col Span 1 */}
       <div className="lg:col-span-1 h-full">
-        <div className="bg-white p-6 rounded-xl h-full min-h-[400px]">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Calendar</h3>
-          <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg border border-dashed border-gray-200 text-gray-400">
-            Calendar Component Placeholder
-          </div>
+        {/* Removed fixed height constraint to let it grow */}
+        <div className="h-full min-h-[400px]">
+          <CalendarWidget meetings={meetings} />
           <div className="mt-6 space-y-4">
             <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider">
               Upcoming
@@ -149,7 +145,12 @@ function RouteComponent() {
               ?.filter((m) => new Date(m.dateTime) > new Date())
               .slice(0, 3)
               .map((meeting) => (
-                <div key={meeting._id} className="flex gap-4">
+                <Link
+                  to="/dashboard/meetings/$id"
+                  params={{ id: meeting._id }}
+                  key={meeting._id}
+                  className="flex gap-4 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                >
                   <div className="shrink-0 w-12 text-center">
                     <span className="block text-xs font-bold text-gray-500">
                       {new Date(meeting.dateTime)
@@ -171,7 +172,7 @@ function RouteComponent() {
                       })}
                     </p>
                   </div>
-                </div>
+                </Link>
               )) ||
               [1, 2, 3].map((i) => (
                 <div key={i} className="flex gap-4">

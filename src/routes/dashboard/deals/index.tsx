@@ -7,8 +7,11 @@ export const Route = createFileRoute('/dashboard/deals/')({
   component: Deals,
 })
 
+import { AddDealModal } from '../../../components/AddDealModal'
+
 function Deals() {
   const { data: deals, isLoading, error } = useDeals()
+  const [isAddDealOpen, setIsAddDealOpen] = useState(false)
 
   return (
     <div className="space-y-6">
@@ -17,7 +20,10 @@ function Deals() {
           <h1 className="text-2xl font-bold text-gray-900">Deals</h1>
           <p className="text-gray-600">Manage your deals and track progress</p>
         </div>
-        <button className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-cyan-600 hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 transition-colors cursor-pointer">
+        <button
+          onClick={() => setIsAddDealOpen(true)}
+          className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-cyan-600 hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 transition-colors cursor-pointer"
+        >
           <Plus className="h-4 w-4 mr-2" />
           Add Deal
         </button>
@@ -98,17 +104,17 @@ function Deals() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {deal.clientId.name} - {deal.clientId.company}
+                      {deal.clientId?.name} - {deal.clientId?.company}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${deal.stage === 'Closed Won'
-                            ? 'bg-green-100 text-green-800'
-                            : deal.stage === 'Negotiation'
-                              ? 'bg-blue-100 text-blue-800'
-                              : deal.stage === 'Closed Lost'
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-gray-100 text-gray-800'
+                          ? 'bg-green-100 text-green-800'
+                          : deal.stage === 'Negotiation'
+                            ? 'bg-blue-100 text-blue-800'
+                            : deal.stage === 'Closed Lost'
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-gray-100 text-gray-800'
                           }`}
                       >
                         {deal.stage}
@@ -122,10 +128,10 @@ function Deals() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${deal.status === 'active'
-                            ? 'bg-green-100 text-green-800'
-                            : deal.status === 'closed'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-gray-100 text-gray-800'
+                          ? 'bg-green-100 text-green-800'
+                          : deal.status === 'closed'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-gray-100 text-gray-800'
                           }`}
                       >
                         {deal.status}
@@ -143,6 +149,8 @@ function Deals() {
           )}
         </div>
       </div>
+
+      <AddDealModal open={isAddDealOpen} onOpenChange={setIsAddDealOpen} />
     </div>
   )
 }

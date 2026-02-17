@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useCalendar } from '../../hooks/useMeetings'
 import { Calendar as CalendarIcon, Loader2, Plus } from 'lucide-react'
@@ -35,9 +35,9 @@ function CalendarPage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Left Side: Calendar */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* Left Side: Calendar - 1/4 width */}
+        <div className="lg:col-span-1 bg-white rounded-xl border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold text-gray-900">
               Calendar View
@@ -63,8 +63,8 @@ function CalendarPage() {
           </div>
         </div>
 
-        {/* Right Side: Meetings */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        {/* Right Side: Meetings - 3/4 width */}
+        <div className="lg:col-span-3 bg-white rounded-xl border border-gray-200 overflow-hidden">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-xl font-semibold text-gray-900">
               Upcoming Meetings
@@ -86,9 +86,11 @@ function CalendarPage() {
             ) : (
               <div className="space-y-4">
                 {upcomingMeetings.map((meeting: any) => (
-                  <div
+                  <Link
+                    to="/dashboard/meetings/$id"
+                    params={{ id: meeting._id }}
                     key={meeting._id}
-                    className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg"
+                    className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors block"
                   >
                     <div className="shrink-0">
                       <div className="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center">
@@ -110,7 +112,7 @@ function CalendarPage() {
                         </p>
                       )}
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}
