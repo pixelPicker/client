@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import Header from '../components/Header'
 
 export const Route = createFileRoute('/signup')({
     component: Signup,
@@ -22,6 +23,7 @@ function Signup() {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+            <Header />
             <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl border border-gray-100">
                 <div className="text-center">
                     <h2 className="mt-6 text-4xl font-bold text-gray-900 tracking-tight">
