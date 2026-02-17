@@ -8,7 +8,7 @@ export const Route = createFileRoute('/dashboard')({
 function DashboardLayout() {
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+      <header className="bg-white w-screen border-b border-gray-200 fixed top-0 z-10">
         <div className="mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex-shrink-0 flex items-center">
@@ -63,8 +63,8 @@ function DashboardLayout() {
         </div>
       </header>
 
-      <main className="">
-        <div className="px-4 sm:px-6 lg:px-8 py-8">
+      <main className="h-dvh pt-15">
+        <div className="px-4 sm:px-6 lg:px-8 py-8 h-full">
           <Outlet />
         </div>
       </main>
