@@ -14,6 +14,8 @@ function Clients() {
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [page, setPage] = useState(1)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [editingClient, setEditingClient] = useState<any>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const navigate = useNavigate()
 
@@ -29,6 +31,12 @@ function Clients() {
   const clients = clientsResponse?.data || []
   const totalPages = clientsResponse?.totalPages || 1
   const { mutate: deleteContact } = useDeleteContact()
+
+  const handleEdit = (client: any, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setEditingClient(client)
+    setIsEditModalOpen(true)
+  }
 
   const handleDelete = (id: string) => {
     if (window.confirm('Are you sure you want to delete this client?')) {
@@ -59,6 +67,11 @@ function Clients() {
       </div>
 
       <AddClientModal open={isModalOpen} onOpenChange={setIsModalOpen} />
+      <AddClientModal
+        open={isEditModalOpen}
+        onOpenChange={setIsEditModalOpen}
+        initialData={editingClient}
+      />
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="p-4 border-b border-gray-200 bg-gray-50/50">
@@ -173,7 +186,10 @@ function Clients() {
                           : 'Never'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button className="text-cyan-600 hover:text-cyan-900 mr-4 cursor-pointer">
+                        <button
+                          onClick={(e) => handleEdit(client, e)}
+                          className="text-cyan-600 hover:text-cyan-900 mr-4 cursor-pointer"
+                        >
                           Edit
                         </button>
                         <button

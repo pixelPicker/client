@@ -65,6 +65,30 @@ function MeetingDetails() {
     }
   }, [meeting])
 
+  const handleAnalyzeClick = async (isReanalysis = false) => {
+    if (!meeting) return;
+
+    const message = isReanalysis
+      ? "Re-analyzing will overwrite current insights and generate new actions. Continue?"
+      : "Start AI analysis for this meeting?";
+
+    if (!window.confirm(message)) return;
+
+    try {
+      setIsAnalyzing(true);
+      await api('/meeting/analyze', {
+        method: 'POST',
+        body: JSON.stringify({ meetingId: meeting._id, transcript: meeting.transcript })
+      });
+      window.location.reload();
+    } catch (err) {
+      console.error("Analysis failed", err);
+      alert("Failed to analyze meeting.");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  }
+
   const handleAction = async (actionId: string, type: 'approve' | 'reject') => {
     if (!meeting) return;
     try {
@@ -195,21 +219,7 @@ function MeetingDetails() {
                 variant="ghost"
                 size="sm"
                 className="h-8 w-8 p-0 text-gray-400 hover:text-purple-600 hover:bg-purple-50"
-                onClick={async () => {
-                  try {
-                    setIsAnalyzing(true);
-                    await api('/meeting/analyze', {
-                      method: 'POST',
-                      body: JSON.stringify({ meetingId: meeting._id, transcript: meeting.transcript })
-                    });
-                    window.location.reload();
-                  } catch (err) {
-                    console.error("Analysis failed", err);
-                    alert("Failed to re-analyze meeting.");
-                  } finally {
-                    setIsAnalyzing(false);
-                  }
-                }}
+                onClick={() => handleAnalyzeClick(true)}
                 disabled={isAnalyzing}
               >
                 <RefreshCcw className={`h-3.5 w-3.5 ${isAnalyzing ? 'animate-spin' : ''}`} />
@@ -220,25 +230,7 @@ function MeetingDetails() {
               size="sm"
               disabled={isAnalyzing}
               className="h-8 text-xs bg-purple-600 hover:bg-purple-700"
-              onClick={async () => {
-                try {
-                  if (!meeting.transcript) {
-                    alert("No transcript available to analyze.");
-                    return;
-                  }
-                  setIsAnalyzing(true);
-                  await api('/meeting/analyze', {
-                    method: 'POST',
-                    body: JSON.stringify({ meetingId: meeting._id, transcript: meeting.transcript })
-                  });
-                  window.location.reload();
-                } catch (err) {
-                  console.error("Analysis failed", err);
-                  alert("Failed to analyze meeting.");
-                } finally {
-                  setIsAnalyzing(false);
-                }
-              }}
+              onClick={() => handleAnalyzeClick(false)}
             >
               {isAnalyzing ? (
                 <>
@@ -388,108 +380,114 @@ function MeetingDetails() {
             <div className="p-4 space-y-4">
               <div className="flex gap-3">
                 <ArrowRight className="h-4 w-4 text-cyan-600 shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xs text-gray-500 font-medium">NEXT STEPS</p>
-                  <div className="text-sm text-gray-700 space-y-1">
-                    {insights.actions && Array.isArray(insights.actions) ? (
-                      insights.actions.map((act: any, i: number) => {
+                <div className="flex-1">
+                  <p className="text-xs text-gray-500 font-medium mb-3">NEXT STEPS</p>
+                  {(() => {
+                    const aiActions = (insights.actions && Array.isArray(insights.actions)) ? insights.actions : [];
+                    const allActions = [
+                      ...aiActions.map((act: any) => {
                         const existingAction = meetingActions.find(pa => {
                           const actionTitleMatch = pa.suggestedData?.title?.toLowerCase() === act.title?.toLowerCase() ||
                             pa.suggestedData?.task?.toLowerCase() === act.title?.toLowerCase();
                           const actionTypeMatch = pa.type === act.type;
                           return (actionTitleMatch || (actionTypeMatch && pa.suggestedData?.title === act.title)) && actionTypeMatch;
                         });
+                        return { ...act, existing: existingAction };
+                      }),
+                      ...meetingActions.filter(pa => pa.type === 'stage_update').map(pa => ({
+                        title: '🚀 Update Deal Stage',
+                        description: `Move deal to "${pa.suggestedData.proposedStage}" phase based on meeting signals.`,
+                        type: 'stage_update',
+                        existing: pa
+                      }))
+                    ];
 
-                        const isPending = existingAction?.status === 'pending';
-                        const isApproved = existingAction?.status === 'approved';
+                    const pending = allActions.filter(a => !a.existing || a.existing.status === 'pending');
+                    const completed = allActions.filter(a => a.existing && a.existing.status === 'approved');
 
-                        return (
-                          <div
-                            key={i}
-                            className={`flex flex-col gap-0.5 mb-4 p-3 rounded-lg border shadow-sm transition-all ${isPending ? 'bg-cyan-50/30 border-cyan-100 hover:border-cyan-200 cursor-pointer' : 'bg-white border-gray-100'
-                              }`}
-                            onClick={() => isPending && handleAction(existingAction._id, 'approve')}
-                          >
-                            <div className="flex justify-between items-start">
-                              <span className="font-medium text-gray-900">{act.title}</span>
-                              <div className="flex flex-col items-end gap-1">
-                                <span className={`text-[10px] px-1.5 py-0.5 rounded uppercase font-bold ${act.type === 'schedule' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
-                                  {act.type}
+                    const renderCard = (act: any, i: number) => {
+                      const isPending = !act.existing || act.existing.status === 'pending';
+                      const isApproved = act.existing?.status === 'approved';
+                      const isStageUpdate = act.type === 'stage_update';
+
+                      return (
+                        <div
+                          key={`${act.type}-${i}`}
+                          className={`flex flex-col gap-0.5 p-3 rounded-lg border shadow-sm transition-all ${isPending
+                            ? (isStageUpdate ? 'bg-purple-50/50 border-purple-100 hover:border-purple-200' : 'bg-cyan-50/30 border-cyan-100 hover:border-cyan-200')
+                            : 'bg-white border-gray-100 opacity-80'
+                            } ${isPending ? 'cursor-pointer hover:shadow-md' : ''}`}
+                          onClick={() => isPending && act.existing && handleAction(act.existing._id, 'approve')}
+                        >
+                          <div className="flex justify-between items-start">
+                            <span className={`font-medium ${isStageUpdate ? 'text-purple-900' : 'text-gray-900'}`}>{act.title}</span>
+                            <div className="flex flex-col items-end gap-1">
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded uppercase font-bold ${act.type === 'schedule' ? 'bg-blue-100 text-blue-700' : isStageUpdate ? 'bg-purple-100 text-purple-700' : 'bg-green-100 text-green-700'}`}>
+                                {act.type}
+                              </span>
+                              {act.existing && (
+                                <span className={`text-[9px] px-1 py-0.5 rounded-full font-semibold ${isApproved ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-amber-100 text-amber-700 border border-amber-200'}`}>
+                                  {act.existing.status.toUpperCase()}
                                 </span>
-                                {existingAction && (
-                                  <span className={`text-[9px] px-1 py-0.5 rounded-full font-semibold ${isApproved ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-amber-100 text-amber-700 border border-amber-200'}`}>
-                                    {existingAction.status.toUpperCase()}
-                                  </span>
-                                )}
-                              </div>
+                              )}
                             </div>
-                            {act.evidence && <span className="text-[10px] text-gray-400 line-clamp-2 italic mb-2">"{act.evidence}"</span>}
-
-                            {isPending && existingAction && (
-                              <div className="flex gap-2 mt-2 pt-2 border-t border-cyan-100/50">
-                                <Button
-                                  size="sm"
-                                  className="h-7 text-[10px] bg-cyan-600 hover:bg-cyan-700 flex-1 font-bold shadow-none"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleAction(existingAction._id, 'approve');
-                                  }}
-                                >
-                                  <CheckCircle className="h-3 w-3 mr-1" /> Execute
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-7 text-[10px] text-gray-400 hover:text-red-600 flex-1 hover:bg-red-50"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleAction(existingAction._id, 'reject');
-                                  }}
-                                >
-                                  <X className="h-3 w-3 mr-1" /> Dismiss
-                                </Button>
-                              </div>
-                            )}
                           </div>
-                        );
-                      })
-                    ) : (
-                      <p>{insights.nextStep || 'No next steps identified.'}</p>
-                    )}
-                    {/* Handle Special Actions like Stage Update that aren't in the actions array */}
-                    {meetingActions.filter(pa => pa.type === 'stage_update').map(pa => (
-                      <div key={pa._id} className="flex flex-col gap-0.5 mb-4 p-3 bg-purple-50 rounded-lg border border-purple-100 shadow-sm">
-                        <div className="flex justify-between items-start">
-                          <span className="font-medium text-purple-900">🚀 Update Deal Stage</span>
-                          {pa.status === 'approved' && (
-                            <span className="text-[9px] px-1 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-700 border border-emerald-200">
-                              APPROVED
-                            </span>
+                          <p className={`text-xs mt-1 mb-2 ${isStageUpdate ? 'text-purple-700' : 'text-gray-600'}`}>
+                            {act.description || (act.type === 'schedule' ? `Proposed for ${new Date(act.suggestedData?.dateTime).toLocaleDateString()}` : act.evidence ? `"${act.evidence}"` : '')}
+                          </p>
+
+                          {isPending && act.existing && (
+                            <div className={`flex gap-2 mt-2 pt-2 border-t ${isStageUpdate ? 'border-purple-100' : 'border-cyan-100/50'}`}>
+                              <Button
+                                size="sm"
+                                className={`h-7 text-[10px] flex-1 font-bold shadow-none ${isStageUpdate ? 'bg-purple-600 hover:bg-purple-700' : 'bg-cyan-600 hover:bg-cyan-700'}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAction(act.existing._id, 'approve');
+                                }}
+                              >
+                                <CheckCircle className="h-3 w-3 mr-1" /> {isStageUpdate ? 'Update Stage' : 'Execute'}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 text-[10px] text-gray-400 hover:text-red-600 flex-1 hover:bg-red-50"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAction(act.existing._id, 'reject');
+                                }}
+                              >
+                                <X className="h-3 w-3 mr-1" /> Dismiss
+                              </Button>
+                            </div>
                           )}
                         </div>
-                        <p className="text-xs text-purple-700 mt-1 mb-2">Move deal to "{pa.suggestedData.proposedStage}" phase based on meeting signals.</p>
-                        {pa.status === 'pending' && (
-                          <div className="flex gap-2 mt-2 pt-2 border-t border-purple-100">
-                            <Button
-                              size="sm"
-                              className="h-7 text-[10px] bg-purple-600 hover:bg-purple-700 flex-1 font-bold"
-                              onClick={() => handleAction(pa._id, 'approve')}
-                            >
-                              <CheckCircle className="h-3 w-3 mr-1" /> Update Stage
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-7 text-[10px] text-purple-400 hover:text-red-600 flex-1"
-                              onClick={() => handleAction(pa._id, 'reject')}
-                            >
-                              <X className="h-3 w-3 mr-1" /> Dismiss
-                            </Button>
+                      );
+                    };
+
+                    if (allActions.length === 0) {
+                      return <p className="italic text-gray-400">No specific next steps identified.</p>;
+                    }
+
+                    return (
+                      <div className="space-y-6">
+                        {pending.length > 0 && (
+                          <div className="space-y-3">
+                            <p className="text-[10px] font-bold text-cyan-600 uppercase tracking-wider pl-1 font-mono">Pending Actions</p>
+                            {pending.map((act, i) => renderCard(act, i))}
+                          </div>
+                        )}
+                        {completed.length > 0 && (
+                          <div className="space-y-3 pt-2">
+                            <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider pl-1 font-mono">Completed</p>
+                            <div className="grid grid-cols-1 gap-3">
+                              {completed.map((act, i) => renderCard(act, i))}
+                            </div>
                           </div>
                         )}
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })()}
                 </div>
               </div>
 

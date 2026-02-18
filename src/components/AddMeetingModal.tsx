@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Loader2, Save } from 'lucide-react'
-import { useCreateMeeting } from '../hooks/useMeetings'
+import { useCreateMeeting, useCalendar } from '../hooks/useMeetings'
 import { useContacts } from '../hooks/useContacts'
 import { useDeals } from '../hooks/useDeals'
+import { toast } from '../hooks/useToast'
 import {
   Sheet,
   SheetContent,
@@ -35,8 +36,10 @@ export function AddMeetingModal({ open, onOpenChange, initialData, onMeetingCrea
   } = useCreateMeeting()
   const { data: contactsResponse } = useContacts('', 1, 100)
   const { data: dealsResponse } = useDeals('', 1, 100)
+  const { data: calendarResponse } = useCalendar('', 1, 1000, 'all')
   const contacts = contactsResponse?.data || []
   const deals = dealsResponse?.data || []
+  const allMeetings = calendarResponse?.data || []
 
   // Use useEffect to update form data when initialData changes or modal opens
   const [formData, setFormData] = useState({
@@ -84,8 +87,21 @@ export function AddMeetingModal({ open, onOpenChange, initialData, onMeetingCrea
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Conflict Check
+    if (formData.dateTime) {
+      const selectedDate = new Date(formData.dateTime).getTime()
+      const hasConflict = allMeetings.some(m => new Date(m.dateTime).getTime() === selectedDate)
+
+      if (hasConflict) {
+        const proceed = window.confirm("Conflict detected: Another meeting is scheduled for this exact time slot. Schedule anyway?")
+        if (!proceed) return
+      }
+    }
+
     createMeeting(formData, {
       onSuccess: (data) => {
+        toast.success("Meeting scheduled successfully.")
         onOpenChange(false)
         if (onMeetingCreated) onMeetingCreated(data);
         setFormData({

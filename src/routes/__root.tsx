@@ -60,6 +60,8 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
   shellComponent: RootDocument,
 })
 
+import { ToastProvider } from '../components/ToastProvider'
+
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
@@ -73,6 +75,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               <main>
                 {children}
               </main>
+              <ToastProvider />
               <TanStackDevtools
                 config={{
                   position: 'bottom-right',

@@ -15,6 +15,7 @@ function Deals() {
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [page, setPage] = useState(1)
+  const [selectedStage, setSelectedStage] = useState<string>('all')
   const [isAddDealOpen, setIsAddDealOpen] = useState(false)
   const navigate = useNavigate()
 
@@ -26,7 +27,7 @@ function Deals() {
     return () => clearTimeout(timer)
   }, [searchTerm])
 
-  const { data: dealsResponse, isLoading, error } = useDeals(debouncedSearch, page)
+  const { data: dealsResponse, isLoading, error } = useDeals(debouncedSearch, page, selectedStage)
   const deals = dealsResponse?.data || []
   const totalPages = dealsResponse?.totalPages || 1
 
@@ -48,15 +49,34 @@ function Deals() {
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="p-4 border-b border-gray-200 bg-gray-50/50">
-          <div className="relative max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search deals..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-sm"
-            />
+          <div className="flex gap-3">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search deals..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-sm"
+              />
+            </div>
+            <select
+              value={selectedStage}
+              onChange={(e) => {
+                setSelectedStage(e.target.value)
+                setPage(1)
+              }}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-sm bg-white"
+            >
+              <option value="all">All Stages</option>
+              <option value="Lead">Lead</option>
+              <option value="Discovery">Discovery</option>
+              <option value="Qualified">Qualified</option>
+              <option value="Proposal Sent">Proposal Sent</option>
+              <option value="Negotiation">Negotiation</option>
+              <option value="Closed Won">Closed Won</option>
+              <option value="Closed Lost">Closed Lost</option>
+            </select>
           </div>
         </div>
 

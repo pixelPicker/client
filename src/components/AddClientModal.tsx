@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Loader2, Save } from 'lucide-react'
-import { useCreateContact } from '../hooks/useContacts'
+import { useCreateContact, useUpdateContact } from '../hooks/useContacts'
 import {
     Sheet,
     SheetContent,
@@ -15,10 +15,12 @@ import { Input } from './ui/input'
 interface AddClientModalProps {
     open: boolean
     onOpenChange: (open: boolean) => void
+    initialData?: any
 }
 
-export function AddClientModal({ open, onOpenChange }: AddClientModalProps) {
-    const { mutate: createContact, isPending: isLoading, error } = useCreateContact()
+export function AddClientModal({ open, onOpenChange, initialData }: AddClientModalProps) {
+    const { mutate: createContact, isPending: isCreating, error: createError } = useCreateContact()
+    const { mutate: updateContact, isPending: isUpdating, error: updateError } = useUpdateContact()
 
     const [formData, setFormData] = useState({
         name: '',
@@ -30,22 +32,61 @@ export function AddClientModal({ open, onOpenChange }: AddClientModalProps) {
         dealScore: 50,
     })
 
+    const isLoading = isCreating || isUpdating
+    const error = createError || updateError
+
+    // Populate form when editing
+    useEffect(() => {
+        if (initialData) {
+            setFormData({
+                name: initialData.name || '',
+                company: initialData.company || '',
+                email: initialData.email || '',
+                phone: initialData.phone || '',
+                dealStage: initialData.dealStage || 'Lead',
+                dealValue: initialData.dealValue || 0,
+                dealScore: initialData.dealScore || 50,
+            })
+        } else {
+            setFormData({
+                name: '',
+                company: '',
+                email: '',
+                phone: '',
+                dealStage: 'Lead',
+                dealValue: 0,
+                dealScore: 50,
+            })
+        }
+    }, [initialData, open])
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
-        createContact(formData, {
-            onSuccess: () => {
-                onOpenChange(false)
-                setFormData({
-                    name: '',
-                    company: '',
-                    email: '',
-                    phone: '',
-                    dealStage: 'Lead',
-                    dealValue: 0,
-                    dealScore: 50,
-                })
-            },
-        })
+
+        if (initialData?._id) {
+            // Update existing client
+            updateContact({ id: initialData._id, data: formData }, {
+                onSuccess: () => {
+                    onOpenChange(false)
+                },
+            })
+        } else {
+            // Create new client
+            createContact(formData, {
+                onSuccess: () => {
+                    onOpenChange(false)
+                    setFormData({
+                        name: '',
+                        company: '',
+                        email: '',
+                        phone: '',
+                        dealStage: 'Lead',
+                        dealValue: 0,
+                        dealScore: 50,
+                    })
+                },
+            })
+        }
     }
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -60,9 +101,9 @@ export function AddClientModal({ open, onOpenChange }: AddClientModalProps) {
         <Sheet open={open} onOpenChange={onOpenChange}>
             <SheetContent className="sm:max-w-md overflow-y-auto">
                 <SheetHeader>
-                    <SheetTitle>Add New Client</SheetTitle>
+                    <SheetTitle>{initialData ? 'Edit Client' : 'Add New Client'}</SheetTitle>
                     <SheetDescription>
-                        Enter client details to track the deal progress.
+                        {initialData ? 'Update client details and deal progress.' : 'Enter client details to track the deal progress.'}
                     </SheetDescription>
                 </SheetHeader>
 
@@ -189,7 +230,7 @@ export function AddClientModal({ open, onOpenChange }: AddClientModalProps) {
                             ) : (
                                 <>
                                     <Save className="h-4 w-4 mr-2" />
-                                    Save Client
+                                    {initialData ? 'Update Client' : 'Save Client'}
                                 </>
                             )}
                         </Button>

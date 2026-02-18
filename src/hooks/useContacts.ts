@@ -70,6 +70,24 @@ export const useCreateContact = () => {
     })
 }
 
+export const useUpdateContact = () => {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ id, data }: { id: string; data: Partial<Contact> }) => {
+            const response = await api(`/contact/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify(data),
+            })
+            return response.data as Contact
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['contacts'] })
+            queryClient.invalidateQueries({ queryKey: ['contact'] })
+        },
+    })
+}
+
 export const useDeleteContact = () => {
     const queryClient = useQueryClient()
 

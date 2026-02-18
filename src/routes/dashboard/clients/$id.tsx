@@ -255,12 +255,6 @@ function ClientDetails() {
         <div>
           {/* Actions Section */}
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">Actions</h2>
-              <p className="text-gray-600 mt-1">
-                Tasks and follow-ups for this client
-              </p>
-            </div>
 
             <div className="p-6">
               {actionsLoading ? (

@@ -23,7 +23,7 @@ function RouteComponent() {
   }, [])
 
   const { data: clientsData, isLoading: clientsLoading } = useContacts('', 1, 1000)
-  const { data: dealsData, isLoading: dealsLoading } = useDeals('', 1, 1000)
+  const { data: dealsData, isLoading: dealsLoading } = useDeals('', 1, 'all', 1000)
   const { data: meetingsData, isLoading: meetingsLoading } = useCalendar('', 1, 1000)
 
   if (clientsLoading || dealsLoading || meetingsLoading) {
