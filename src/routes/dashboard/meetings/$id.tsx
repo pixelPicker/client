@@ -32,7 +32,7 @@ function MeetingDetails() {
     (meeting?.clientId as any)?._id || meeting?.clientId,
     (meeting?.dealId as any)?._id || meeting?.dealId,
   )
-  const [pendingActions, setPendingActions] = useState<any[]>([])
+  const [meetingActions, setMeetingActions] = useState<any[]>([])
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(false)
 
@@ -50,13 +50,12 @@ function MeetingDetails() {
   useEffect(() => {
     if (actions && meeting) {
       const getId = (id: any) => (typeof id === 'object' && id !== null ? id._id : id);
-      const aiActions = actions.filter(
+      const currentMeetingActions = actions.filter(
         (a) =>
           a.source === 'ai' &&
-          a.status === 'pending' &&
           getId(a.meetingId) === meeting._id,
       )
-      setPendingActions(aiActions)
+      setMeetingActions(currentMeetingActions)
     }
   }, [actions, meeting])
 
@@ -72,7 +71,7 @@ function MeetingDetails() {
       const getObjId = (obj: any) => (typeof obj === 'object' && obj !== null ? obj._id : obj);
 
       if (type === 'approve') {
-        const action = pendingActions.find(a => a._id === actionId);
+        const action = meetingActions.find(a => a._id === actionId);
         if (!action) return;
 
         if (action.type === 'schedule') {
@@ -107,7 +106,7 @@ function MeetingDetails() {
       } else {
         await api(`/action/${actionId}`, { method: 'DELETE' })
       }
-      setPendingActions((prev) => prev.filter((a) => a._id !== actionId))
+      setMeetingActions((prev) => prev.filter((a) => a._id !== actionId))
     } catch (err) {
       console.error("Failed to process action", err)
       alert("Failed to process action. Please try again.")
@@ -394,35 +393,46 @@ function MeetingDetails() {
                   <div className="text-sm text-gray-700 space-y-1">
                     {insights.actions && Array.isArray(insights.actions) ? (
                       insights.actions.map((act: any, i: number) => {
-                        const pending = pendingActions.find(pa => {
+                        const existingAction = meetingActions.find(pa => {
                           const actionTitleMatch = pa.suggestedData?.title?.toLowerCase() === act.title?.toLowerCase() ||
                             pa.suggestedData?.task?.toLowerCase() === act.title?.toLowerCase();
                           const actionTypeMatch = pa.type === act.type;
                           return (actionTitleMatch || (actionTypeMatch && pa.suggestedData?.title === act.title)) && actionTypeMatch;
                         });
+
+                        const isPending = existingAction?.status === 'pending';
+                        const isApproved = existingAction?.status === 'approved';
+
                         return (
                           <div
                             key={i}
-                            className={`flex flex-col gap-0.5 mb-4 p-3 rounded-lg border shadow-sm transition-all ${pending ? 'bg-cyan-50/30 border-cyan-100 hover:border-cyan-200 cursor-pointer' : 'bg-white border-gray-100'
+                            className={`flex flex-col gap-0.5 mb-4 p-3 rounded-lg border shadow-sm transition-all ${isPending ? 'bg-cyan-50/30 border-cyan-100 hover:border-cyan-200 cursor-pointer' : 'bg-white border-gray-100'
                               }`}
-                            onClick={() => pending && handleAction(pending._id, 'approve')}
+                            onClick={() => isPending && handleAction(existingAction._id, 'approve')}
                           >
                             <div className="flex justify-between items-start">
                               <span className="font-medium text-gray-900">{act.title}</span>
-                              <span className={`text-[10px] px-1.5 py-0.5 rounded uppercase font-bold ${act.type === 'schedule' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
-                                {act.type}
-                              </span>
+                              <div className="flex flex-col items-end gap-1">
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded uppercase font-bold ${act.type === 'schedule' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                                  {act.type}
+                                </span>
+                                {existingAction && (
+                                  <span className={`text-[9px] px-1 py-0.5 rounded-full font-semibold ${isApproved ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-amber-100 text-amber-700 border border-amber-200'}`}>
+                                    {existingAction.status.toUpperCase()}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                             {act.evidence && <span className="text-[10px] text-gray-400 line-clamp-2 italic mb-2">"{act.evidence}"</span>}
 
-                            {pending && (
+                            {isPending && existingAction && (
                               <div className="flex gap-2 mt-2 pt-2 border-t border-cyan-100/50">
                                 <Button
                                   size="sm"
                                   className="h-7 text-[10px] bg-cyan-600 hover:bg-cyan-700 flex-1 font-bold shadow-none"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleAction(pending._id, 'approve');
+                                    handleAction(existingAction._id, 'approve');
                                   }}
                                 >
                                   <CheckCircle className="h-3 w-3 mr-1" /> Execute
@@ -433,7 +443,7 @@ function MeetingDetails() {
                                   className="h-7 text-[10px] text-gray-400 hover:text-red-600 flex-1 hover:bg-red-50"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleAction(pending._id, 'reject');
+                                    handleAction(existingAction._id, 'reject');
                                   }}
                                 >
                                   <X className="h-3 w-3 mr-1" /> Dismiss
@@ -447,29 +457,36 @@ function MeetingDetails() {
                       <p>{insights.nextStep || 'No next steps identified.'}</p>
                     )}
                     {/* Handle Special Actions like Stage Update that aren't in the actions array */}
-                    {pendingActions.filter(pa => pa.type === 'stage_update').map(pa => (
+                    {meetingActions.filter(pa => pa.type === 'stage_update').map(pa => (
                       <div key={pa._id} className="flex flex-col gap-0.5 mb-4 p-3 bg-purple-50 rounded-lg border border-purple-100 shadow-sm">
                         <div className="flex justify-between items-start">
                           <span className="font-medium text-purple-900">🚀 Update Deal Stage</span>
+                          {pa.status === 'approved' && (
+                            <span className="text-[9px] px-1 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-700 border border-emerald-200">
+                              APPROVED
+                            </span>
+                          )}
                         </div>
                         <p className="text-xs text-purple-700 mt-1 mb-2">Move deal to "{pa.suggestedData.proposedStage}" phase based on meeting signals.</p>
-                        <div className="flex gap-2 mt-2 pt-2 border-t border-purple-100">
-                          <Button
-                            size="sm"
-                            className="h-7 text-[10px] bg-purple-600 hover:bg-purple-700 flex-1 font-bold"
-                            onClick={() => handleAction(pa._id, 'approve')}
-                          >
-                            <CheckCircle className="h-3 w-3 mr-1" /> Update Stage
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-7 text-[10px] text-purple-400 hover:text-red-600 flex-1"
-                            onClick={() => handleAction(pa._id, 'reject')}
-                          >
-                            <X className="h-3 w-3 mr-1" /> Dismiss
-                          </Button>
-                        </div>
+                        {pa.status === 'pending' && (
+                          <div className="flex gap-2 mt-2 pt-2 border-t border-purple-100">
+                            <Button
+                              size="sm"
+                              className="h-7 text-[10px] bg-purple-600 hover:bg-purple-700 flex-1 font-bold"
+                              onClick={() => handleAction(pa._id, 'approve')}
+                            >
+                              <CheckCircle className="h-3 w-3 mr-1" /> Update Stage
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-[10px] text-purple-400 hover:text-red-600 flex-1"
+                              onClick={() => handleAction(pa._id, 'reject')}
+                            >
+                              <X className="h-3 w-3 mr-1" /> Dismiss
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -574,7 +591,7 @@ function MeetingDetails() {
           // If created manually via modal, we remove the pending action
           if (selectedActionId) {
             api(`/action/${selectedActionId}`, { method: 'DELETE' })
-              .then(() => setPendingActions((prev) => prev.filter((a) => a._id !== selectedActionId)))
+              .then(() => setMeetingActions((prev) => prev.filter((a) => a._id !== selectedActionId)))
               .catch(e => console.error("Failed to delete action", e));
           }
         }}
@@ -585,7 +602,7 @@ function MeetingDetails() {
         initialData={emailModalData}
         onEmailSent={() => {
           if (selectedActionId) {
-            setPendingActions((prev) => prev.filter((a) => a._id !== selectedActionId))
+            setMeetingActions((prev) => prev.filter((a) => a._id !== selectedActionId))
             setSelectedActionId(null)
           }
         }}

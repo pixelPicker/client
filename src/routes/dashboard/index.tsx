@@ -39,15 +39,19 @@ function RouteComponent() {
 
   const totalClients = clientsData?.total || 0
   const totalDeals = dealsData?.total || 0
-  const activeDeals = deals?.filter((d) => d.status === 'active').length || 0
-  const closedDeals = deals?.filter((d) => d.status === 'closed').length || 0
+
+  // Calculate stats based on stages
+  const activeDealsList = deals?.filter((d) => !['Closed Won', 'Closed Lost'].includes(d.stage)) || []
+  const closedDealsList = deals?.filter((d) => ['Closed Won', 'Closed Lost'].includes(d.stage)) || []
+
+  const activeDeals = activeDealsList.length
+  const closedDealsCount = closedDealsList.length
+
+  const pipelineValue = activeDealsList.reduce((sum, d) => sum + (d.value || 0), 0)
+  const wonValue = deals?.filter(d => d.stage === 'Closed Won').reduce((sum, d) => sum + (d.value || 0), 0)
+
   const upcomingMeetings =
     meetings?.filter((m) => new Date(m.dateTime) > now).length || 0
-  const nextMeeting = meetings
-    ?.filter((m) => new Date(m.dateTime) > now)
-    .sort(
-      (a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime(),
-    )[0]
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start h-full">
@@ -64,7 +68,7 @@ function RouteComponent() {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           {/* Clients Stat */}
-          <div className="bg-white p-6 rounded-xl">
+          <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
             <div>
               <p className="text-sm font-medium text-gray-500">Total Clients</p>
               <p className="text-3xl font-bold text-gray-900 mt-2">
@@ -81,56 +85,57 @@ function RouteComponent() {
           </div>
 
           {/* Deals Stat */}
-          <div className="bg-white p-6 rounded-xl">
+          <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
             <div>
-              <p className="text-sm font-medium text-gray-500">Active Deals</p>
-              <div className="mt-2 flex items-baseline gap-2">
+              <p className="text-sm font-medium text-gray-500">Active Pipeline</p>
+              <div className="mt-2 flex  items-baseline gap-2">
                 <p className="text-3xl font-bold text-gray-900">
                   {activeDeals}
+                </p>
+                <p className="text-sm font-medium text-gray-500">
+                  (${pipelineValue.toLocaleString()})
                 </p>
               </div>
             </div>
             <div className="mt-4 space-y-3">
-              <div className="flex w-full h-2 rounded-full overflow-hidden bg-gray-100">
+              <div className="flex w-full h-10 rounded-md overflow-hidden bg-gray-100">
                 <div
-                  className="bg-blue-500 h-full"
+                  className="bg-cyan-500 h-full transition-all duration-500"
                   style={{
                     width:
                       totalDeals > 0
-                        ? `${(closedDeals / totalDeals) * 100}%`
+                        ? `${(closedDealsCount / totalDeals) * 100}%`
                         : '0%',
                   }}
                 ></div>
               </div>
               <div className="flex justify-between text-xs text-gray-500">
                 <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-lg bg-blue-500"></div>
-                  <span>{closedDeals} Closed</span>
+                  <div className="w-2 h-2 rounded-lg bg-cyan-500"></div>
+                  <span>{closedDealsCount} Closed</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-lg bg-gray-200"></div>
-                  <span>{totalDeals - closedDeals} Remaining</span>
+                  <span>{activeDeals} Active</span>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Meetings Stat */}
-          <div className="bg-white p-6 rounded-xl">
+          <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
             <div>
               <p className="text-sm font-medium text-gray-500">
-                Upcoming Meetings
+                Total Won
               </p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
-                {upcomingMeetings}
+              <p className="text-3xl font-bold text-emerald-600 mt-2">
+                ${wonValue.toLocaleString()}
               </p>
             </div>
             <div className="mt-4 text-sm">
-              <span className="text-gray-500">Next meeting:</span>
+              <span className="text-gray-500">Upcoming:</span>
               <p className="font-medium text-gray-900 mt-1">
-                {nextMeeting
-                  ? `${nextMeeting.title} on ${new Date(nextMeeting.dateTime).toLocaleDateString()}`
-                  : 'No upcoming meetings'}
+                {upcomingMeetings} scheduled meetings
               </p>
             </div>
           </div>
