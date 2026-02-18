@@ -57,6 +57,7 @@ export const useLogout = () => {
 
     return () => {
         localStorage.removeItem('token')
+        queryClient.removeQueries() // Clear all cache to prevent data leakage between users
         queryClient.setQueryData(['user'], null)
         navigate({ to: '/login' })
     }

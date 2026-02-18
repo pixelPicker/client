@@ -37,8 +37,12 @@ const LEVEL_STYLES = {
     },
 }
 
+import { useState } from 'react'
+import { GamificationModal } from './GamificationModal'
+
 export function MomentumBadge() {
     const { data, isLoading } = useMomentum()
+    const [isModalOpen, setIsModalOpen] = useState(false)
 
     if (isLoading || !data) {
         return (
@@ -46,71 +50,64 @@ export function MomentumBadge() {
         )
     }
 
+    const { career } = data
     const style = LEVEL_STYLES[data.level] ?? LEVEL_STYLES.Inactive
 
     return (
-        <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <div
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${style.bg} ${style.border} cursor-default select-none`}
-                    >
-                        {/* Emoji with optional pulse */}
-                        <span
-                            className={`text-sm ${style.pulse ? 'animate-pulse' : ''}`}
+        <>
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <button
+                            onClick={() => setIsModalOpen(true)}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${style.bg} ${style.border} hover:shadow-md transition-all active:scale-95`}
                         >
-                            {data.emoji}
-                        </span>
+                            {/* Career Level Circle */}
+                            <div className="relative w-6 h-6 flex items-center justify-center">
+                                <svg className="absolute w-full h-full -rotate-90">
+                                    <circle
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                        fill="none"
+                                        className="stroke-gray-200"
+                                        strokeWidth="2"
+                                    />
+                                    <circle
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                        fill="none"
+                                        className="stroke-cyan-500"
+                                        strokeWidth="2"
+                                        strokeDasharray={`${(career.currentLevelProgress / career.nextLevelXp) * 63} 63`}
+                                        strokeLinecap="round"
+                                    />
+                                </svg>
+                                <span className="text-[9px] font-bold text-gray-700 relative z-10">{career.level}</span>
+                            </div>
 
-                        {/* Label */}
-                        <span className={`text-xs font-semibold ${style.text}`}>
-                            {data.level}
-                        </span>
+                            {/* Weekly Status Emoji */}
+                            <span
+                                className={`text-sm ${style.pulse ? 'animate-pulse' : ''}`}
+                            >
+                                {data.emoji}
+                            </span>
 
-                        {/* Dot bar */}
-                        <div className="flex items-center gap-0.5">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                                <div
-                                    key={i}
-                                    className={`w-1.5 h-1.5 rounded-full transition-colors ${i < data.filledDots
-                                        ? style.dot
-                                        : 'bg-gray-200'
-                                        }`}
-                                />
-                            ))}
-                        </div>
-                    </div>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs space-y-1 p-3">
-                    <p className="font-semibold text-white-800 mb-1">
-                        Momentum Score: {data.score}
-                    </p>
-                    <p className="text-white-500">
-                        🗓 Meetings completed:{' '}
-                        <span className="font-medium text-white-700">
-                            {data.breakdown.meetingsCompleted}
-                        </span>{' '}
-                        (+{data.breakdown.meetingsCompleted * 2} pts)
-                    </p>
-                    <p className="text-white-500">
-                        ✅ Actions approved:{' '}
-                        <span className="font-medium text-white-700">
-                            {data.breakdown.actionsApproved}
-                        </span>{' '}
-                        (+{data.breakdown.actionsApproved * 3} pts)
-                    </p>
-                    <p className="text-white-500">
-                        📈 Deals progressed:{' '}
-                        <span className="font-medium text-white-700">
-                            {data.breakdown.dealsProgressed}
-                        </span>{' '}
-                        (+{data.breakdown.dealsProgressed * 5} pts)
-                    </p>
-                    <p className="text-white-400 text-[10px] pt-1 border-t border-gray-100">
-                        Based on last 7 days of activity
-                    </p>
-                </TooltipContent>
-            </Tooltip>
-        </TooltipProvider>
+                            {/* Momentum Label (Hidden on mobile if needed, but kept for now) */}
+                            <span className={`text-xs font-semibold ${style.text} hidden sm:inline`}>
+                                {data.level}
+                            </span>
+                        </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs">
+                        <p className="font-bold">Career Level {career.level}</p>
+                        <p>Click to view achievements & stats</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+
+            <GamificationModal open={isModalOpen} onOpenChange={setIsModalOpen} />
+        </>
     )
 }

@@ -11,6 +11,23 @@ interface MomentumData {
         actionsApproved: number
         dealsProgressed: number
     }
+    career: {
+        xp: number
+        level: number
+        nextLevelXp: number
+        currentLevelProgress: number
+        totalMeetings: number
+        totalActions: number
+        totalDealsWon: number
+    }
+    achievements: Array<{
+        id: string
+        icon: string
+        name: string
+        description: string
+        unlockedAt?: string
+        locked?: boolean
+    }>
 }
 
 interface StreaksData {
