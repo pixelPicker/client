@@ -358,7 +358,7 @@ function MeetingDetails() {
               Executive Summary
             </h3>
             <p className="text-sm text-gray-600 leading-relaxed">
-              {insights.summary?.text || insights.summary || "No summary generated yet."}
+              {typeof insights.summary === 'string' ? insights.summary : insights.summary?.text || "No summary generated yet."}
             </p>
             {insights.summary?.confidence && (
               <p className="text-[10px] text-gray-400 mt-2 italic">
@@ -505,7 +505,7 @@ function MeetingDetails() {
                 <div>
                   <p className="text-xs text-gray-500 font-medium">TIMELINE</p>
                   <p className="text-sm text-gray-700">
-                    {insights.timeline?.text || insights.timeline || 'No timeline identified.'}
+                    {typeof insights.timeline === 'string' ? insights.timeline : insights.timeline?.text || 'No timeline identified.'}
                   </p>
                 </div>
               </div>
