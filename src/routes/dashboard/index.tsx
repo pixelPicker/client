@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 
 export const Route = createFileRoute('/dashboard/')({
@@ -154,62 +154,7 @@ function RouteComponent() {
         {/* Removed fixed height constraint to let it grow */}
         <div className="h-full min-h-[400px]">
           <CalendarWidget meetings={meetings} />
-          <div className="mt-6 space-y-4">
-            <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider">
-              Upcoming
-            </h4>
-            {meetings
-              ?.filter((m) => new Date(m.dateTime) > new Date())
-              .slice(0, 3)
-              .map((meeting) => (
-                <Link
-                  to="/dashboard/meetings/$id"
-                  params={{ id: meeting._id }}
-                  key={meeting._id}
-                  className="flex gap-4 p-2 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <div className="shrink-0 w-12 text-center">
-                    <span className="block text-xs font-bold text-gray-500">
-                      {new Date(meeting.dateTime)
-                        .toLocaleDateString('en-US', { month: 'short' })
-                        .toUpperCase()}
-                    </span>
-                    <span className="block text-lg font-bold text-gray-900">
-                      {new Date(meeting.dateTime).getDate()}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      {meeting.title}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {new Date(meeting.dateTime).toLocaleTimeString('en-US', {
-                        hour: 'numeric',
-                        minute: '2-digit',
-                      })}
-                    </p>
-                  </div>
-                </Link>
-              )) ||
-              [1, 2, 3].map((i) => (
-                <div key={i} className="flex gap-4">
-                  <div className="shrink-0 w-12 text-center">
-                    <span className="block text-xs font-bold text-gray-500">
-                      FEB
-                    </span>
-                    <span className="block text-lg font-bold text-gray-900">
-                      {17 + i}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      No meetings
-                    </p>
-                    <p className="text-xs text-gray-500">-</p>
-                  </div>
-                </div>
-              ))}
-          </div>
+
         </div>
       </div>
     </div>

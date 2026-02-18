@@ -1,5 +1,5 @@
 import { createFileRoute, useParams, useNavigate, Link } from '@tanstack/react-router'
-import { ArrowLeft, Users, Calendar, Loader2, CheckCircle, AlertTriangle, Clock, ArrowRight, X } from 'lucide-react'
+import { ArrowLeft, Users, Calendar, Loader2, CheckCircle, AlertTriangle, Clock, ArrowRight, X, Bell } from 'lucide-react'
 import {
   Tooltip,
   TooltipContent,
@@ -186,15 +186,52 @@ function MeetingDetails() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {/* Go Live button */}
-          <Link
-            to="/dashboard/meetings/live"
-            search={{ meetingId: meeting._id, title: meeting.title }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-medium transition-colors"
-          >
-            <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
-            Go Live
-          </Link>
+          {/* Go Live button - future only */}
+          {new Date(meeting.dateTime) > new Date() ? (
+            <Link
+              to="/dashboard/meetings/live"
+              search={{ meetingId: meeting._id, title: meeting.title }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-medium transition-colors"
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
+              Go Live
+            </Link>
+          ) : (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-400 rounded-lg text-xs font-medium cursor-not-allowed opacity-50">
+                    <span className="h-1.5 w-1.5 rounded-full bg-gray-400" />
+                    Go Live (Ended)
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>This meeting has already ended</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+
+          {/* Reminder Button - future only */}
+          {new Date(meeting.dateTime) > new Date() && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs border-amber-200 text-amber-700 hover:bg-amber-50"
+              onClick={() => {
+                const clientName = (meeting.clientId as any)?.name?.split(' ')[0] || 'there';
+                setEmailModalData({
+                  to: (meeting.clientId as any)?.email || '',
+                  subject: `Reminder: ${meeting.title}`,
+                  body: `Hi ${clientName},\n\nJust a quick reminder about our meeting scheduled for ${new Date(meeting.dateTime).toLocaleString()}.\n\nLooking forward to speaking with you.\n\nBest,\nSales Team`
+                });
+                setIsEmailModalOpen(true);
+              }}
+            >
+              <Bell className="h-3 w-3 mr-1.5" />
+              Remind
+            </Button>
+          )}
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -392,7 +429,8 @@ function MeetingDetails() {
                 <div className="flex-1">
                   <p className="text-xs text-gray-500 font-medium mb-3">NEXT STEPS</p>
                   {(() => {
-                    const aiActions = (insights.actions && Array.isArray(insights.actions)) ? insights.actions : [];
+                    const aiActions = ((insights.actions && Array.isArray(insights.actions)) ? insights.actions : [])
+                      .filter((a: any) => a.type !== 'stage_update');
                     const allActions = [
                       ...aiActions.map((act: any) => {
                         const existingAction = meetingActions.find(pa => {

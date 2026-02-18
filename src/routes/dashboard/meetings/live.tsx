@@ -61,8 +61,9 @@ function LiveMeeting() {
   const { data: dealsData } = useDeals('', 1)
   const deals = dealsData?.data || []
   const createMeeting = useCreateMeeting()
-  const { data: calendarData } = useCalendar('', 1, 20, 'upcoming')
-  const upcomingMeetings = calendarData?.data || []
+  const { data: calendarData } = useCalendar('', 1, 50, 'upcoming')
+  // Filter client-side to be sure, as 'upcoming' param might include today's past meetings depending on backend logic
+  const upcomingMeetings = calendarData?.data?.filter((m: any) => new Date(m.dateTime) > new Date()) || []
 
   // Keep meetingId ref in sync
   useEffect(() => { meetingIdRef.current = meetingId }, [meetingId])
