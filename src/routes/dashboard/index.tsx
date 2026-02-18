@@ -14,9 +14,9 @@ import { useDeals } from '../../hooks/useDeals'
 import { useCalendar } from '../../hooks/useMeetings'
 
 function RouteComponent() {
-  const { data: clients, isLoading: clientsLoading } = useContacts()
-  const { data: deals, isLoading: dealsLoading } = useDeals()
-  const { data: meetings, isLoading: meetingsLoading } = useCalendar()
+  const { data: clientsData, isLoading: clientsLoading } = useContacts('', 1, 1000)
+  const { data: dealsData, isLoading: dealsLoading } = useDeals('', 1, 1000)
+  const { data: meetingsData, isLoading: meetingsLoading } = useCalendar('', 1, 1000)
 
   if (clientsLoading || dealsLoading || meetingsLoading) {
     return (
@@ -26,8 +26,11 @@ function RouteComponent() {
     )
   }
 
-  const totalClients = clients?.length || 0
-  const totalDeals = deals?.length || 0
+  const deals = dealsData?.data || []
+  const meetings = meetingsData?.data || []
+
+  const totalClients = clientsData?.total || 0
+  const totalDeals = dealsData?.total || 0
   const activeDeals = deals?.filter((d) => d.status === 'active').length || 0
   const closedDeals = deals?.filter((d) => d.status === 'closed').length || 0
   const upcomingMeetings =

@@ -20,7 +20,8 @@ interface AddDealModalProps {
 
 export function AddDealModal({ open, onOpenChange }: AddDealModalProps) {
     const { mutate: createDeal, isPending: isLoading, error } = useCreateDeal()
-    const { data: clients, isLoading: isClientsLoading } = useContacts()
+    const { data: clientsResponse, isLoading: isClientsLoading } = useContacts('', 1, 100)
+    const clients = clientsResponse?.data || []
 
     const [formData, setFormData] = useState({
         title: '',

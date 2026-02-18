@@ -33,8 +33,10 @@ export function AddMeetingModal({ open, onOpenChange, initialData, onMeetingCrea
     isPending: isLoading,
     error,
   } = useCreateMeeting()
-  const { data: contacts } = useContacts()
-  const { data: deals } = useDeals()
+  const { data: contactsResponse } = useContacts('', 1, 100)
+  const { data: dealsResponse } = useDeals('', 1, 100)
+  const contacts = contactsResponse?.data || []
+  const deals = dealsResponse?.data || []
 
   // Use useEffect to update form data when initialData changes or modal opens
   const [formData, setFormData] = useState({
@@ -139,7 +141,7 @@ export function AddMeetingModal({ open, onOpenChange, initialData, onMeetingCrea
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500"
             >
               <option value="">No deal</option>
-              {availableDeals.map((deal) => (
+              {availableDeals.map((deal: any) => (
                 <option key={deal._id} value={deal._id}>
                   {deal.title}
                 </option>

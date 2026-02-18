@@ -6,11 +6,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '../../../components/ui/tooltip'
-import { useMeeting } from '../../../hooks/useMeetings'
-import { useActions } from '../../../hooks/useMeetings'
+import { useMeeting, useActions, useUpdateMeeting } from '../../../hooks/useMeetings'
 import { useState, useEffect } from 'react'
 import { api } from '../../../lib/api'
 import { Button } from '../../../components/ui/button'
+import { Edit2, Save, FileText } from 'lucide-react'
 
 export const Route = createFileRoute('/dashboard/meetings/$id')({
   component: MeetingDetails,
@@ -19,7 +19,7 @@ export const Route = createFileRoute('/dashboard/meetings/$id')({
 import { AIChatWidget } from '../../../components/AIChatWidget'
 import { AddMeetingModal } from '../../../components/AddMeetingModal'
 import { EmailComposerModal } from '../../../components/EmailComposerModal'
-import { Sparkles } from 'lucide-react'
+import { Sparkles, RefreshCcw } from 'lucide-react'
 
 // ... existing code ...
 
@@ -43,6 +43,10 @@ function MeetingDetails() {
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false)
   const [emailModalData, setEmailModalData] = useState<any>(null)
 
+  const [isEditingTranscript, setIsEditingTranscript] = useState(false)
+  const [editedTranscript, setEditedTranscript] = useState('')
+  const updateMeeting = useUpdateMeeting()
+
   useEffect(() => {
     if (actions && meeting) {
       const aiActions = actions.filter(
@@ -54,6 +58,12 @@ function MeetingDetails() {
       setPendingActions(aiActions)
     }
   }, [actions, meeting])
+
+  useEffect(() => {
+    if (meeting?.transcript) {
+      setEditedTranscript(meeting.transcript)
+    }
+  }, [meeting])
 
   const handleAction = async (actionId: string, type: 'approve' | 'reject') => {
     if (!meeting) return;
@@ -70,6 +80,18 @@ function MeetingDetails() {
           });
           setSelectedActionId(actionId);
           setIsMeetingModalOpen(true);
+          return;
+        }
+
+        if (action && action.type === 'email') {
+          setEmailModalData({
+            to: (meeting.clientId as any).email || '',
+            subject: action.suggestedData.subject,
+            body: action.suggestedData.body,
+            actionId: actionId
+          });
+          setSelectedActionId(actionId);
+          setIsEmailModalOpen(true);
           return;
         }
 
@@ -113,7 +135,7 @@ function MeetingDetails() {
       <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shrink-0 z-10">
         <div className="flex items-center gap-4">
           <button
-            onClick={() => navigate({ to: '..' })}
+            onClick={() => navigate({ to: '/dashboard/calendar' })}
             className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 hover:text-gray-900"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -160,9 +182,34 @@ function MeetingDetails() {
           </TooltipProvider>
 
           {Object.keys(insights).length > 0 ? (
-            <span className="bg-cyan-50 text-cyan-700 text-xs px-2 py-1 rounded-full font-medium border border-cyan-100 flex items-center gap-1">
-              <CheckCircle className="h-3 w-3" /> AI Analyzed
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="bg-cyan-50 text-cyan-700 text-xs px-2 py-1 rounded-full font-medium border border-cyan-100 flex items-center gap-1">
+                <CheckCircle className="h-3 w-3" /> AI Analyzed
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 text-gray-400 hover:text-purple-600 hover:bg-purple-50"
+                onClick={async () => {
+                  try {
+                    setIsAnalyzing(true);
+                    await api('/meeting/analyze', {
+                      method: 'POST',
+                      body: JSON.stringify({ meetingId: meeting._id, transcript: meeting.transcript })
+                    });
+                    window.location.reload();
+                  } catch (err) {
+                    console.error("Analysis failed", err);
+                    alert("Failed to re-analyze meeting.");
+                  } finally {
+                    setIsAnalyzing(false);
+                  }
+                }}
+                disabled={isAnalyzing}
+              >
+                <RefreshCcw className={`h-3.5 w-3.5 ${isAnalyzing ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
           ) : (
             <Button
               size="sm"
@@ -207,15 +254,89 @@ function MeetingDetails() {
 
         {/* Left: Transcript */}
         <div className="flex-1 overflow-y-auto p-6 border-r border-gray-200 bg-white">
-          <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4 sticky top-0 bg-white py-2">Transcript</h2>
+          <div className="flex items-center justify-between mb-4 sticky top-0 bg-white py-2 z-10">
+            <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Transcript
+            </h2>
+            <div className="flex gap-2">
+              {isEditingTranscript ? (
+                <>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs"
+                    onClick={() => {
+                      setIsEditingTranscript(false)
+                      setEditedTranscript(meeting.transcript || '')
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="h-7 text-xs bg-cyan-600 hover:bg-cyan-700"
+                    disabled={updateMeeting.isPending}
+                    onClick={async () => {
+                      try {
+                        await updateMeeting.mutateAsync({
+                          id: meeting._id,
+                          data: { transcript: editedTranscript },
+                        })
+                        setIsEditingTranscript(false)
+                      } catch (err) {
+                        console.error('Failed to update transcript', err)
+                      }
+                    }}
+                  >
+                    {updateMeeting.isPending ? (
+                      <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                    ) : (
+                      <Save className="h-3 w-3 mr-1" />
+                    )}
+                    Save
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs text-gray-500 hover:text-cyan-600"
+                  onClick={() => setIsEditingTranscript(true)}
+                >
+                  <Edit2 className="h-3 w-3 mr-1" />
+                  {meeting.transcript ? 'Edit' : 'Add Transcript'}
+                </Button>
+              )}
+            </div>
+          </div>
+
           <div className="prose max-w-none text-gray-800 leading-relaxed font-sans text-base">
-            {meeting.transcript ? (
+            {isEditingTranscript ? (
+              <textarea
+                value={editedTranscript}
+                onChange={(e) => setEditedTranscript(e.target.value)}
+                className="w-full h-[calc(100vh-15rem)] p-4 border border-cyan-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 font-sans text-base leading-relaxed bg-cyan-50/10"
+                placeholder="Paste or type the meeting transcript here..."
+              />
+            ) : meeting.transcript ? (
               meeting.transcript.split('\n').map((line: string, i: number) => (
-                <p key={i} className="mb-4">{line}</p>
+                <p key={i} className="mb-4">
+                  {line}
+                </p>
               ))
             ) : (
               <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-                <p className="italic">No transcript available for this meeting.</p>
+                <p className="italic mb-4">No transcript available for this meeting.</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-cyan-600 border-cyan-100 bg-cyan-50/50"
+                  onClick={() => setIsEditingTranscript(true)}
+                >
+                  <Edit2 className="h-3 w-3 mr-1.5" />
+                  Add Transcript Now
+                </Button>
               </div>
             )}
           </div>
@@ -224,54 +345,6 @@ function MeetingDetails() {
         {/* Right: Insights & Actions */}
         <div className="w-[450px] shrink-0 overflow-y-auto bg-gray-50 p-6 space-y-6">
 
-          {/* Action Cards (High Priority) */}
-          {pendingActions.length > 0 && (
-            <div className="space-y-3">
-              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Suggested Actions</h2>
-              {pendingActions.map(action => (
-                <div key={action._id} className="bg-white border-l-4 border-cyan-500 rounded-r-lg shadow-sm p-4 animate-in fade-in slide-in-from-bottom-2">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-medium text-gray-900 text-sm">
-                      {action.type === 'schedule' ? '📅 Schedule Follow-up' :
-                        action.type === 'stage_update' ? '🚀 Update Deal Stage' :
-                          action.type === 'email' ? '✉️ Send Email' : 'Action Required'}
-                    </h3>
-                    <span className="bg-cyan-100 text-cyan-800 text-[10px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wide">AI</span>
-                  </div>
-
-                  <p className="text-sm text-gray-600 mb-4">
-                    {action.type === 'schedule'
-                      ? `Proposed: ${action.suggestedData.title} on ${new Date(action.suggestedData.dateTime).toLocaleDateString()} at ${new Date(action.suggestedData.dateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                      : action.type === 'stage_update'
-                        ? `Move deal to "${action.suggestedData.proposedStage}" phase based on positive signals.`
-                        : action.type === 'email'
-                          ? `Draft email to client about: ${action.suggestedData.task}`
-                          : action.suggestedData.task
-                    }
-                  </p>
-
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      className="h-7 text-xs bg-cyan-600 hover:bg-cyan-700 w-full"
-                      onClick={() => handleAction(action._id, 'approve')}
-                    >
-                      <CheckCircle className="h-3 w-3 mr-1.5" /> Approve
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 text-xs text-gray-500 hover:text-red-600 w-full"
-                      onClick={() => handleAction(action._id, 'reject')}
-                    >
-                      <X className="h-3 w-3 mr-1.5" /> Reject
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
           {/* AI Summary */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
             <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
@@ -279,8 +352,13 @@ function MeetingDetails() {
               Executive Summary
             </h3>
             <p className="text-sm text-gray-600 leading-relaxed">
-              {insights.summary || "No summary generated yet."}
+              {insights.summary?.text || insights.summary || "No summary generated yet."}
             </p>
+            {insights.summary?.confidence && (
+              <p className="text-[10px] text-gray-400 mt-2 italic">
+                Confidence Score: {(insights.summary.confidence * 100).toFixed(0)}%
+              </p>
+            )}
           </div>
 
           {/* Key Topics */}
@@ -306,10 +384,88 @@ function MeetingDetails() {
               <div className="flex gap-3">
                 <ArrowRight className="h-4 w-4 text-cyan-600 shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-xs text-gray-500 font-medium">NEXT STEP</p>
-                  <p className="text-sm text-gray-700">
-                    {typeof insights.nextStep === 'string' ? insights.nextStep : JSON.stringify(insights.nextStep) || 'No next step identified.'}
-                  </p>
+                  <p className="text-xs text-gray-500 font-medium">NEXT STEPS</p>
+                  <div className="text-sm text-gray-700 space-y-1">
+                    {insights.actions && Array.isArray(insights.actions) ? (
+                      insights.actions.map((act: any, i: number) => {
+                        const pending = pendingActions.find(pa =>
+                          (pa.suggestedData?.title?.toLowerCase() === act.title?.toLowerCase()) ||
+                          (pa.suggestedData?.task?.toLowerCase() === act.title?.toLowerCase()) ||
+                          (pa.type === act.type && pa.suggestedData?.title === act.title)
+                        );
+                        return (
+                          <div
+                            key={i}
+                            className={`flex flex-col gap-0.5 mb-4 p-3 rounded-lg border shadow-sm transition-all ${pending ? 'bg-cyan-50/30 border-cyan-100 hover:border-cyan-200 cursor-pointer' : 'bg-white border-gray-100'
+                              }`}
+                            onClick={() => pending && handleAction(pending._id, 'approve')}
+                          >
+                            <div className="flex justify-between items-start">
+                              <span className="font-medium text-gray-900">{act.title}</span>
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded uppercase font-bold ${act.type === 'schedule' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                                {act.type}
+                              </span>
+                            </div>
+                            {act.evidence && <span className="text-[10px] text-gray-400 line-clamp-2 italic mb-2">"{act.evidence}"</span>}
+
+                            {pending && (
+                              <div className="flex gap-2 mt-2 pt-2 border-t border-cyan-100/50">
+                                <Button
+                                  size="sm"
+                                  className="h-7 text-[10px] bg-cyan-600 hover:bg-cyan-700 flex-1 font-bold shadow-none"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleAction(pending._id, 'approve');
+                                  }}
+                                >
+                                  <CheckCircle className="h-3 w-3 mr-1" /> Execute
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 text-[10px] text-gray-400 hover:text-red-600 flex-1 hover:bg-red-50"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleAction(pending._id, 'reject');
+                                  }}
+                                >
+                                  <X className="h-3 w-3 mr-1" /> Dismiss
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <p>{insights.nextStep || 'No next steps identified.'}</p>
+                    )}
+                    {/* Handle Special Actions like Stage Update that aren't in the actions array */}
+                    {pendingActions.filter(pa => pa.type === 'stage_update').map(pa => (
+                      <div key={pa._id} className="flex flex-col gap-0.5 mb-4 p-3 bg-purple-50 rounded-lg border border-purple-100 shadow-sm">
+                        <div className="flex justify-between items-start">
+                          <span className="font-medium text-purple-900">🚀 Update Deal Stage</span>
+                        </div>
+                        <p className="text-xs text-purple-700 mt-1 mb-2">Move deal to "{pa.suggestedData.proposedStage}" phase based on meeting signals.</p>
+                        <div className="flex gap-2 mt-2 pt-2 border-t border-purple-100">
+                          <Button
+                            size="sm"
+                            className="h-7 text-[10px] bg-purple-600 hover:bg-purple-700 flex-1 font-bold"
+                            onClick={() => handleAction(pa._id, 'approve')}
+                          >
+                            <CheckCircle className="h-3 w-3 mr-1" /> Update Stage
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-[10px] text-purple-400 hover:text-red-600 flex-1"
+                            onClick={() => handleAction(pa._id, 'reject')}
+                          >
+                            <X className="h-3 w-3 mr-1" /> Dismiss
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -318,7 +474,7 @@ function MeetingDetails() {
                 <div>
                   <p className="text-xs text-gray-500 font-medium">TIMELINE</p>
                   <p className="text-sm text-gray-700">
-                    {typeof insights.timeline === 'string' ? insights.timeline : JSON.stringify(insights.timeline) || 'No timeline identified.'}
+                    {insights.timeline?.text || insights.timeline || 'No timeline identified.'}
                   </p>
                 </div>
               </div>
@@ -326,7 +482,7 @@ function MeetingDetails() {
           </div>
 
           {/* Risks & Objections */}
-          {(insights.riskSignals?.length > 0 || insights.objection) && (
+          {(insights.riskSignals?.length > 0 || insights.objections?.length > 0 || insights.objection) && (
             <div className="bg-white rounded-xl border border-red-100 shadow-sm overflow-hidden">
               <div className="p-4 border-b border-red-100 bg-red-50/30">
                 <h3 className="text-sm font-semibold text-red-700 flex items-center gap-2">
@@ -335,18 +491,30 @@ function MeetingDetails() {
                 </h3>
               </div>
               <div className="p-4 space-y-4">
-                {insights.objection && (
+                {insights.objections && Array.isArray(insights.objections) && insights.objections.length > 0 ? (
+                  insights.objections.map((obj: any, i: number) => (
+                    <div key={i} className="mb-3">
+                      <p className="text-xs text-red-500 font-medium mb-0.5 uppercase">{obj.type || 'OBJECTION'}</p>
+                      <p className="text-sm text-gray-700 font-medium">{obj.detail}</p>
+                      {obj.evidence && <p className="text-[10px] text-gray-400 italic mt-0.5">"{obj.evidence}"</p>}
+                    </div>
+                  ))
+                ) : insights.objection && (
                   <div>
                     <p className="text-xs text-red-500 font-medium mb-1">MAIN OBJECTION</p>
                     <p className="text-sm text-gray-700">{insights.objection}</p>
                   </div>
                 )}
+
                 {insights.riskSignals && insights.riskSignals.length > 0 && (
                   <div>
                     <p className="text-xs text-red-500 font-medium mb-1">RISK SIGNALS</p>
-                    <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
-                      {insights.riskSignals.map((risk: string, i: number) => (
-                        <li key={i}>{risk}</li>
+                    <ul className="list-none text-sm text-gray-700 space-y-2">
+                      {insights.riskSignals.map((risk: any, i: number) => (
+                        <li key={i} className="flex flex-col border-l-2 border-red-100 pl-3">
+                          <span className="font-medium text-gray-800">{typeof risk === 'string' ? risk : risk.signal}</span>
+                          {risk.evidence && <span className="text-[10px] text-gray-400 italic">"{risk.evidence}"</span>}
+                        </li>
                       ))}
                     </ul>
                   </div>
@@ -358,15 +526,22 @@ function MeetingDetails() {
           {/* Deal Intel */}
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-              <p className="text-xs text-gray-500 mb-1">BUYER INTENT</p>
-              <p className={`text-sm font-semibold ${insights.intent === 'High' ? 'text-green-600' :
-                insights.intent === 'Low' ? 'text-red-600' : 'text-yellow-600'
-                }`}>
-                {insights.intent || 'Unknown'}
-              </p>
+              <p className="text-xs text-gray-500 mb-1 font-medium">INTENT SCORE</p>
+              <div className="flex items-end gap-2">
+                <p className="text-lg font-bold text-gray-900 leading-none">
+                  {insights.intentScore !== undefined ? (insights.intentScore * 100).toFixed(0) :
+                    (insights.intent ? (insights.intent === 'High' ? '90' : '45') : '0')}%
+                </p>
+                <div className="h-1.5 flex-1 bg-gray-100 rounded-full overflow-hidden mb-1">
+                  <div
+                    className={`h-full rounded-full ${insights.intentScore > 0.7 ? 'bg-green-500' : 'bg-yellow-500'}`}
+                    style={{ width: `${(insights.intentScore ?? (insights.intent ? (insights.intent === 'High' ? 0.9 : 0.45) : 0)) * 100}%` }}
+                  />
+                </div>
+              </div>
             </div>
             <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-              <p className="text-xs text-gray-500 mb-1">DEAL SIGNAL</p>
+              <p className="text-xs text-gray-500 mb-1 font-medium">DEAL SIGNAL</p>
               <p className={`text-sm font-semibold ${insights.dealSignal === 'Positive' ? 'text-green-600' :
                 insights.dealSignal === 'Negative' ? 'text-red-600' : 'text-gray-600'
                 }`}>
@@ -394,6 +569,17 @@ function MeetingDetails() {
             api(`/action/${selectedActionId}`, { method: 'DELETE' })
               .then(() => setPendingActions((prev) => prev.filter((a) => a._id !== selectedActionId)))
               .catch(e => console.error("Failed to delete action", e));
+          }
+        }}
+      />
+      <EmailComposerModal
+        open={isEmailModalOpen}
+        onOpenChange={setIsEmailModalOpen}
+        initialData={emailModalData}
+        onEmailSent={() => {
+          if (selectedActionId) {
+            setPendingActions((prev) => prev.filter((a) => a._id !== selectedActionId))
+            setSelectedActionId(null)
           }
         }}
       />

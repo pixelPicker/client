@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useCalendar } from '../../hooks/useMeetings'
-import { Calendar as CalendarIcon, Loader2, Plus } from 'lucide-react'
+import { Calendar as CalendarIcon, Loader2, Plus, Search } from 'lucide-react'
 import { AddMeetingModal } from '../../components/AddMeetingModal'
+import { Pagination } from '../../components/ui/pagination'
+import { useEffect } from 'react'
 
 export const Route = createFileRoute('/dashboard/calendar')({
   component: CalendarPage,
@@ -10,14 +12,24 @@ export const Route = createFileRoute('/dashboard/calendar')({
 
 function CalendarPage() {
   const [view, setView] = useState<'month' | 'week' | 'day'>('month')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [page, setPage] = useState(1)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const { data: meetings, isLoading } = useCalendar()
 
-  const upcomingMeetings =
-    meetings?.filter((meeting: any) => {
-      if (!meeting.dateTime) return false
-      return new Date(meeting.dateTime) > new Date()
-    }) || []
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm)
+      setPage(1)
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
+  const { data: meetingsResponse, isLoading, error } = useCalendar(debouncedSearch, page, 10, 'upcoming')
+  const meetings = meetingsResponse?.data || []
+  const totalPages = meetingsResponse?.totalPages || 1
+
+  const upcomingMeetings = meetings
 
   return (
     <div className="space-y-6">
@@ -65,11 +77,23 @@ function CalendarPage() {
 
         {/* Right Side: Meetings - 3/4 width */}
         <div className="lg:col-span-3 bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">
-              Upcoming Meetings
-            </h2>
-            <p className="text-gray-600 mt-1">All scheduled meetings</p>
+          <div className="p-6 border-b border-gray-200 flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">
+                Upcoming Meetings
+              </h2>
+              <p className="text-gray-600 mt-1">All scheduled meetings</p>
+            </div>
+            <div className="relative max-w-xs flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search meetings..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-sm"
+              />
+            </div>
           </div>
 
           <div className="p-6">
@@ -78,10 +102,16 @@ function CalendarPage() {
                 <Loader2 className="h-6 w-6 animate-spin text-cyan-600 mb-2" />
                 <p className="text-gray-500 text-sm">Loading meetings...</p>
               </div>
-            ) : !upcomingMeetings || upcomingMeetings.length === 0 ? (
+            ) : error ? (
+              <div className="p-8 text-center text-red-600">
+                <p>Error loading meetings: {(error as any).message}</p>
+              </div>
+            ) : upcomingMeetings.length === 0 ? (
               <div className="text-center py-8">
                 <CalendarIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">No upcoming meetings</p>
+                <p className="text-gray-500">
+                  {searchTerm ? 'No meetings match your search' : 'No upcoming meetings'}
+                </p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -106,14 +136,25 @@ function CalendarPage() {
                           ? new Date(meeting.dateTime).toLocaleString()
                           : 'No date'}
                       </p>
-                      {meeting.contactId && (
+                      {meeting.clientId && (
                         <p className="text-sm text-gray-700 mt-2">
-                          {meeting.contactId.name} - {meeting.contactId.company}
+                          {meeting.clientId.name} - {meeting.clientId.company}
                         </p>
                       )}
                     </div>
                   </Link>
                 ))}
+
+                {totalPages > 1 && (
+                  <div className="pt-4 border-t border-gray-100">
+                    <Pagination
+                      currentPage={page}
+                      totalPages={totalPages}
+                      onPageChange={setPage}
+                      isLoading={isLoading}
+                    />
+                  </div>
+                )}
               </div>
             )}
           </div>

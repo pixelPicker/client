@@ -45,12 +45,43 @@ export const useCreateMeeting = () => {
   })
 }
 
-export const useCalendar = () => {
+export interface PaginatedMeetings {
+  data: Meeting[]
+  total: number
+  totalPages: number
+  currentPage: number
+}
+
+export const useUpdateMeeting = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const response = await api(`/meeting/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      })
+      return response
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['meeting', variables.id] })
+      queryClient.invalidateQueries({ queryKey: ['meetings'] })
+      queryClient.invalidateQueries({ queryKey: ['calendar'] })
+    },
+  })
+}
+
+export const useCalendar = (search = '', page = 1, limit = 10, timeframe = 'all') => {
   return useQuery({
-    queryKey: ['calendar'],
+    queryKey: ['calendar', search, page, limit, timeframe],
     queryFn: async () => {
-      const response = await api('/meeting/calendar')
-      return response.data as Meeting[]
+      const queryParams = new URLSearchParams({
+        search,
+        page: page.toString(),
+        limit: limit.toString(),
+        timeframe,
+      })
+      const response = await api(`/meeting/calendar?${queryParams}`)
+      return response as unknown as PaginatedMeetings
     },
   })
 }

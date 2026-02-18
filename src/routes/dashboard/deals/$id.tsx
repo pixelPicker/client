@@ -1,4 +1,4 @@
-import { createFileRoute, useParams, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useParams, useNavigate, Link } from '@tanstack/react-router'
 import { useDeal } from '../../../hooks/useDeals'
 import { useMeetings, useActions } from '../../../hooks/useMeetings'
 import {
@@ -12,6 +12,10 @@ import {
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { useState } from 'react'
+import { AddMeetingModal } from '../../../components/AddMeetingModal'
+import { EmailComposerModal } from '../../../components/EmailComposerModal'
+import { Button } from '@/components/ui/button'
+import { X } from 'lucide-react'
 import {
   Tabs,
   TabsContent,
@@ -40,6 +44,12 @@ function DealDetails() {
   const [input, setInput] = useState('')
   const [isAsking, setIsAsking] = useState(false)
 
+  const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false)
+  const [meetingModalData, setMeetingModalData] = useState<any>(null)
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false)
+  const [emailModalData, setEmailModalData] = useState<any>(null)
+  const [selectedActionId, setSelectedActionId] = useState<string | null>(null)
+
   const handleAsk = async () => {
     if (!input.trim()) return
     const question = input.trim()
@@ -62,6 +72,51 @@ function DealDetails() {
       ])
     } finally {
       setIsAsking(false)
+    }
+  }
+
+  const handleAction = async (actionId: string, type: 'approve' | 'reject') => {
+    try {
+      if (type === 'approve') {
+        const action = actions?.find((a) => a._id === actionId)
+        if (action?.type === 'schedule') {
+          setMeetingModalData({
+            title: action.suggestedData.title,
+            dateTime: action.suggestedData.dateTime,
+            clientId: deal?.clientId?._id || deal?.clientId,
+            dealId: deal?._id,
+            notes: action.suggestedData.notes || '',
+          })
+          setSelectedActionId(actionId)
+          setIsMeetingModalOpen(true)
+          return
+        }
+
+        if (action?.type === 'email') {
+          setEmailModalData({
+            to: (deal?.clientId as any)?.email || '',
+            subject: action.suggestedData.subject,
+            body: action.suggestedData.body,
+            actionId: actionId,
+          })
+          setSelectedActionId(actionId)
+          setIsEmailModalOpen(true)
+          return
+        }
+
+        await api('/action/confirm', {
+          method: 'POST',
+          body: JSON.stringify({ actionId }),
+        })
+      } else {
+        await api(`/action/${actionId}`, { method: 'DELETE' })
+      }
+      // Re-fetch or locally update after confirm/delete
+      // For simplicity in this view, we'll let the query invalidate handle it 
+      // but locally filtering is faster
+      window.location.reload()
+    } catch (err) {
+      console.error('Failed to process action', err)
     }
   }
 
@@ -164,31 +219,30 @@ function DealDetails() {
             ) : (
               <div className="space-y-4">
                 {meetings.map((meeting: any) => (
-                  <div
+                  <Link
+                    to="/dashboard/meetings/$id"
+                    params={{ id: meeting._id }}
                     key={meeting._id}
-                    className="flex items-start gap-4 p-4 border border-gray-100 rounded-lg hover:bg-gray-50 cursor-pointer"
-                    onClick={() =>
-                      navigate({ to: `/dashboard/meetings/${meeting._id}` })
-                    }
+                    className="flex items-start gap-4 p-4 border border-gray-100 rounded-lg hover:bg-gray-50 cursor-pointer group transition-colors"
                   >
-                    <div className="h-10 w-10 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-700 font-bold">
+                    <div className="h-10 w-10 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-700 font-bold group-hover:bg-cyan-200 transition-colors">
                       {meeting.title.charAt(0)}
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-medium text-gray-900">
+                      <h3 className="font-medium text-gray-900 group-hover:text-cyan-700 transition-colors">
                         {meeting.title}
                       </h3>
                       <p className="text-sm text-gray-500">
                         {new Date(meeting.dateTime).toLocaleDateString()} at{' '}
-                        {new Date(meeting.dateTime).toLocaleTimeString()}
+                        {new Date(meeting.dateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                       {meeting.notes && (
-                        <p className="text-sm text-gray-600 mt-1">
+                        <p className="text-sm text-gray-600 mt-1 line-clamp-2">
                           {meeting.notes}
                         </p>
                       )}
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}
@@ -235,29 +289,52 @@ function DealDetails() {
                         {action.title}
                       </h3>
                       <p className="text-sm text-gray-500">
-                        {action.description}
+                        {action.description || (action.type === 'schedule' ? `Proposed for ${new Date(action.suggestedData.dateTime).toLocaleDateString()}` : action.suggestedData.task)}
                       </p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <span
-                          className={`px-2 py-1 text-xs rounded-full ${action.priority === 'high'
-                            ? 'bg-red-100 text-red-800'
-                            : action.priority === 'medium'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-green-100 text-green-800'
-                            }`}
-                        >
-                          {action.priority}
-                        </span>
-                        <span
-                          className={`px-2 py-1 text-xs rounded-full ${action.status === 'completed'
-                            ? 'bg-green-100 text-green-800'
-                            : action.status === 'overdue'
+                      <div className="flex items-center justify-between mt-2">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`px-2 py-1 text-xs rounded-full ${action.priority === 'high'
                               ? 'bg-red-100 text-red-800'
-                              : 'bg-blue-100 text-blue-800'
-                            }`}
-                        >
-                          {action.status}
-                        </span>
+                              : action.priority === 'medium'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-green-100 text-green-800'
+                              }`}
+                          >
+                            {action.priority || 'medium'}
+                          </span>
+                          <span
+                            className={`px-2 py-1 text-xs rounded-full ${action.status === 'completed'
+                              ? 'bg-green-100 text-green-800'
+                              : action.status === 'overdue'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-blue-100 text-blue-800'
+                              }`}
+                          >
+                            {action.status}
+                          </span>
+                        </div>
+                        {action.status === 'pending' && (
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              className="h-7 text-xs bg-cyan-600 hover:bg-cyan-700"
+                              onClick={() => handleAction(action._id, 'approve')}
+                            >
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs text-gray-400 hover:text-red-600"
+                              onClick={() => handleAction(action._id, 'reject')}
+                            >
+                              <X className="h-3 w-3 mr-1" />
+                              Reject
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -272,11 +349,13 @@ function DealDetails() {
             </h3>
             <div className="h-96 overflow-y-auto space-y-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
               {messages.length === 0 ? (
-                <div className="text-center text-gray-500">
-                  <p>Ask me anything about this deal!</p>
-                  <p className="text-sm mt-2">
-                    Try: "What is the next step?" or "Summarize the last
-                    meeting"
+                <div className="text-center text-gray-500 py-8">
+                  <p className="font-medium">Deal Assistant</p>
+                  <p className="text-sm mt-1">
+                    Ask questions about deal status, meeting history, or next steps.
+                  </p>
+                  <p className="text-xs mt-4 text-gray-400">
+                    Try: "What were the key takeaways from our last meeting?"
                   </p>
                 </div>
               ) : (
@@ -332,6 +411,31 @@ function DealDetails() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <AddMeetingModal
+        open={isMeetingModalOpen}
+        onOpenChange={setIsMeetingModalOpen}
+        initialData={meetingModalData}
+        onMeetingCreated={() => {
+          if (selectedActionId) {
+            api(`/action/${selectedActionId}`, { method: 'DELETE' }).then(() =>
+              window.location.reload(),
+            )
+          }
+        }}
+      />
+      <EmailComposerModal
+        open={isEmailModalOpen}
+        onOpenChange={setIsEmailModalOpen}
+        initialData={emailModalData}
+        onEmailSent={() => {
+          if (selectedActionId) {
+            api(`/action/${selectedActionId}`, { method: 'DELETE' }).then(() =>
+              window.location.reload(),
+            )
+          }
+        }}
+      />
     </div>
   )
 }

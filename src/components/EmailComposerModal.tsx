@@ -19,9 +19,10 @@ interface EmailComposerModalProps {
         subject?: string
         body?: string
     }
+    onEmailSent?: () => void
 }
 
-export function EmailComposerModal({ open, onOpenChange, initialData }: EmailComposerModalProps) {
+export function EmailComposerModal({ open, onOpenChange, initialData, onEmailSent }: EmailComposerModalProps) {
     const [formData, setFormData] = useState({
         to: '',
         subject: '',
@@ -47,7 +48,7 @@ export function EmailComposerModal({ open, onOpenChange, initialData }: EmailCom
             setIsLoading(false)
             onOpenChange(false)
             alert("Email sent! (Simulated)")
-            // Here we would call an API and also clear the pending action from the parent
+            if (onEmailSent) onEmailSent()
         }, 1000)
     }
 

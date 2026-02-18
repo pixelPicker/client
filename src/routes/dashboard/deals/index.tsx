@@ -8,11 +8,27 @@ export const Route = createFileRoute('/dashboard/deals/')({
 })
 
 import { AddDealModal } from '../../../components/AddDealModal'
+import { Pagination } from '../../../components/ui/pagination'
+import { useEffect } from 'react'
 
 function Deals() {
-  const { data: deals, isLoading, error } = useDeals()
+  const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [page, setPage] = useState(1)
   const [isAddDealOpen, setIsAddDealOpen] = useState(false)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm)
+      setPage(1) // Reset to first page on search
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
+  const { data: dealsResponse, isLoading, error } = useDeals(debouncedSearch, page)
+  const deals = dealsResponse?.data || []
+  const totalPages = dealsResponse?.totalPages || 1
 
   return (
     <div className="space-y-6">
@@ -37,6 +53,8 @@ function Deals() {
             <input
               type="text"
               placeholder="Search deals..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-sm"
             />
           </div>
@@ -52,102 +70,112 @@ function Deals() {
             <div className="p-8 text-center text-red-600">
               <p>Error loading deals: {(error as any).message}</p>
             </div>
-          ) : !deals || deals.length === 0 ? (
+          ) : deals.length === 0 ? (
             <div className="p-12 text-center">
               <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                 <Plus className="h-6 w-6 text-gray-400" />
               </div>
               <p className="text-gray-900 font-medium">No deals found</p>
               <p className="text-gray-500 text-sm mt-1">
-                Get started by adding your first deal
+                {searchTerm ? 'Try a different search term' : 'Get started by adding your first deal'}
               </p>
             </div>
           ) : (
-            <table className="w-full">
-              <thead className="bg-gray-50 text-left border-b border-gray-200">
-                <tr>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Deal
-                  </th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Client
-                  </th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Stage
-                  </th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Value
-                  </th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Last Activity
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {deals.map((deal) => (
-                  <tr
-                    key={deal._id}
-                    className="hover:bg-gray-50 transition-colors cursor-pointer"
-                    onClick={() => navigate({ to: '/dashboard/deals/$id', params: { id: deal._id } })}
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="h-10 w-10 shrink-0 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-700 font-bold">
-                          {deal.title.charAt(0)}
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
-                            {deal.title}
+            <>
+              <table className="w-full">
+                <thead className="bg-gray-50 text-left border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                      Deal
+                    </th>
+                    <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                      Client
+                    </th>
+                    <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                      Stage
+                    </th>
+                    <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                      Value
+                    </th>
+                    <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                      Last Activity
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {deals.map((deal) => (
+                    <tr
+                      key={deal._id}
+                      className="hover:bg-gray-50 transition-colors cursor-pointer"
+                      onClick={() => navigate({ to: '/dashboard/deals/$id', params: { id: deal._id } })}
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="h-10 w-10 shrink-0 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-700 font-bold">
+                            {deal.title.charAt(0)}
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">
+                              {deal.title}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {deal.clientId?.name} - {deal.clientId?.company}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${deal.stage === 'Closed Won'
-                          ? 'bg-green-100 text-green-800'
-                          : deal.stage === 'Negotiation'
-                            ? 'bg-blue-100 text-blue-800'
-                            : deal.stage === 'Closed Lost'
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {deal.clientId?.name} - {deal.clientId?.company}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${deal.stage === 'Closed Won'
+                            ? 'bg-green-100 text-green-800'
+                            : deal.stage === 'Negotiation'
+                              ? 'bg-blue-100 text-blue-800'
+                              : deal.stage === 'Closed Lost'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-gray-100 text-gray-800'
+                            }`}
+                        >
+                          {deal.stage}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900 font-medium">
+                          ${deal.value?.toLocaleString() || '0'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${deal.status === 'active'
+                            ? 'bg-green-100 text-green-800'
+                            : deal.status === 'closed'
                               ? 'bg-red-100 text-red-800'
                               : 'bg-gray-100 text-gray-800'
-                          }`}
-                      >
-                        {deal.stage}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 font-medium">
-                        ${deal.value?.toLocaleString() || '0'}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${deal.status === 'active'
-                          ? 'bg-green-100 text-green-800'
-                          : deal.status === 'closed'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-gray-100 text-gray-800'
-                          }`}
-                      >
-                        {deal.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {deal.lastActivity
-                        ? new Date(deal.lastActivity).toLocaleDateString()
-                        : 'No activity'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                            }`}
+                        >
+                          {deal.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {deal.lastActivity
+                          ? new Date(deal.lastActivity).toLocaleDateString()
+                          : 'No activity'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {totalPages > 1 && (
+                <Pagination
+                  currentPage={page}
+                  totalPages={totalPages}
+                  onPageChange={setPage}
+                  isLoading={isLoading}
+                />
+              )}
+            </>
           )}
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { createFileRoute, useParams, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useParams, useNavigate, Link } from '@tanstack/react-router'
 import { useContact } from '../../../hooks/useContacts'
 import { useMeetings, useActions } from '../../../hooks/useMeetings'
 import {
@@ -8,7 +8,13 @@ import {
   Building,
   Loader2,
   CheckCircle,
+  X,
 } from 'lucide-react'
+import { useState } from 'react'
+import { AddMeetingModal } from '../../../components/AddMeetingModal'
+import { EmailComposerModal } from '../../../components/EmailComposerModal'
+import { Button } from '@/components/ui/button'
+import { api } from '../../../lib/api'
 
 export const Route = createFileRoute('/dashboard/clients/$id')({
   component: ClientDetails,
@@ -24,6 +30,53 @@ function ClientDetails() {
   } = useContact(id)
   const { data: meetings, isLoading: meetingsLoading } = useMeetings(id)
   const { data: actions, isLoading: actionsLoading } = useActions(id)
+
+  const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false)
+  const [meetingModalData, setMeetingModalData] = useState<any>(null)
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false)
+  const [emailModalData, setEmailModalData] = useState<any>(null)
+  const [selectedActionId, setSelectedActionId] = useState<string | null>(null)
+
+  const handleAction = async (actionId: string, type: 'approve' | 'reject') => {
+    try {
+      if (type === 'approve') {
+        const action = actions?.find((a) => a._id === actionId)
+        if (action?.type === 'schedule') {
+          setMeetingModalData({
+            title: action.suggestedData.title,
+            dateTime: action.suggestedData.dateTime,
+            clientId: client?._id,
+            notes: action.suggestedData.notes || '',
+          })
+          setSelectedActionId(actionId)
+          setIsMeetingModalOpen(true)
+          return
+        }
+
+        if (action?.type === 'email') {
+          setEmailModalData({
+            to: client?.email || '',
+            subject: action.suggestedData.subject,
+            body: action.suggestedData.body,
+            actionId: actionId,
+          })
+          setSelectedActionId(actionId)
+          setIsEmailModalOpen(true)
+          return
+        }
+
+        await api('/action/confirm', {
+          method: 'POST',
+          body: JSON.stringify({ actionId }),
+        })
+      } else {
+        await api(`/action/${actionId}`, { method: 'DELETE' })
+      }
+      window.location.reload()
+    } catch (err) {
+      console.error('Failed to process action', err)
+    }
+  }
 
   if (clientLoading) {
     return (
@@ -100,15 +153,14 @@ function ClientDetails() {
               </div>
               <div className="space-y-2">
                 <span
-                  className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    client.dealStage === 'Closed Won'
-                      ? 'bg-green-100 text-green-800'
-                      : client.dealStage === 'Negotiation'
-                        ? 'bg-blue-100 text-blue-800'
-                        : client.dealStage === 'Lost'
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-gray-100 text-gray-800'
-                  }`}
+                  className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${client.dealStage === 'Closed Won'
+                    ? 'bg-green-100 text-green-800'
+                    : client.dealStage === 'Negotiation'
+                      ? 'bg-blue-100 text-blue-800'
+                      : client.dealStage === 'Lost'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-gray-100 text-gray-800'
+                    }`}
                 >
                   {client.dealStage}
                 </span>
@@ -143,25 +195,27 @@ function ClientDetails() {
               ) : (
                 <div className="space-y-4">
                   {meetings.map((meeting: any) => (
-                    <div
+                    <Link
+                      to="/dashboard/meetings/$id"
+                      params={{ id: meeting._id }}
                       key={meeting._id}
-                      className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg"
+                      className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer group"
                     >
                       <div className="shrink-0">
-                        <div className="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center">
+                        <div className="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center group-hover:bg-cyan-200 transition-colors">
                           <Calendar className="h-6 w-6 text-cyan-600" />
                         </div>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-medium text-gray-900">
+                        <h3 className="text-sm font-medium text-gray-900 group-hover:text-cyan-700 transition-colors">
                           {meeting.title}
                         </h3>
                         <p className="text-sm text-gray-500 mt-1">
-                          {new Date(meeting.date).toLocaleDateString()} •{' '}
-                          {meeting.duration} minutes
+                          {new Date(meeting.dateTime).toLocaleDateString()} •{' '}
+                          {meeting.duration || 30} minutes
                         </p>
                         {meeting.notes && (
-                          <p className="text-sm text-gray-700 mt-2">
+                          <p className="text-sm text-gray-700 mt-2 line-clamp-2">
                             {meeting.notes}
                           </p>
                         )}
@@ -171,7 +225,7 @@ function ClientDetails() {
                           </p>
                         )}
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               )}
@@ -228,22 +282,20 @@ function ClientDetails() {
                     >
                       <div className="shrink-0">
                         <div
-                          className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                            action.status === 'completed'
-                              ? 'bg-green-100'
-                              : action.status === 'overdue'
-                                ? 'bg-red-100'
-                                : 'bg-cyan-100'
-                          }`}
+                          className={`w-12 h-12 rounded-lg flex items-center justify-center ${action.status === 'completed'
+                            ? 'bg-green-100'
+                            : action.status === 'overdue'
+                              ? 'bg-red-100'
+                              : 'bg-cyan-100'
+                            }`}
                         >
                           <CheckCircle
-                            className={`h-6 w-6 ${
-                              action.status === 'completed'
-                                ? 'text-green-600'
-                                : action.status === 'overdue'
-                                  ? 'text-red-600'
-                                  : 'text-cyan-600'
-                            }`}
+                            className={`h-6 w-6 ${action.status === 'completed'
+                              ? 'text-green-600'
+                              : action.status === 'overdue'
+                                ? 'text-red-600'
+                                : 'text-cyan-600'
+                              }`}
                           />
                         </div>
                       </div>
@@ -253,35 +305,54 @@ function ClientDetails() {
                             {action.title}
                           </h3>
                           <span
-                            className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                              action.priority === 'high'
-                                ? 'bg-red-100 text-red-800'
-                                : action.priority === 'medium'
-                                  ? 'bg-yellow-100 text-yellow-800'
-                                  : 'bg-gray-100 text-gray-800'
-                            }`}
+                            className={`px-2 py-0.5 rounded-full text-xs font-medium ${action.priority === 'high'
+                              ? 'bg-red-100 text-red-800'
+                              : action.priority === 'medium'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-gray-100 text-gray-800'
+                              }`}
                           >
-                            {action.priority}
+                            {action.priority || 'medium'}
                           </span>
                           <span
-                            className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                              action.status === 'completed'
-                                ? 'bg-green-100 text-green-800'
-                                : action.status === 'overdue'
-                                  ? 'bg-red-100 text-red-800'
-                                  : 'bg-blue-100 text-blue-800'
-                            }`}
+                            className={`px-2 py-0.5 rounded-full text-xs font-medium ${action.status === 'completed'
+                              ? 'bg-green-100 text-green-800'
+                              : action.status === 'overdue'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-blue-100 text-blue-800'
+                              }`}
                           >
                             {action.status}
                           </span>
                         </div>
                         <p className="text-sm text-gray-700 mt-1">
-                          {action.description}
+                          {action.description || (action.type === 'schedule' ? `Proposed for ${new Date(action.suggestedData.dateTime).toLocaleDateString()}` : action.suggestedData.task)}
                         </p>
                         {action.dueDate && (
                           <p className="text-sm text-gray-500 mt-1">
                             Due: {new Date(action.dueDate).toLocaleDateString()}
                           </p>
+                        )}
+                        {action.status === 'pending' && (
+                          <div className="flex gap-2 mt-3">
+                            <Button
+                              size="sm"
+                              className="h-7 text-xs bg-cyan-600 hover:bg-cyan-700"
+                              onClick={() => handleAction(action._id, 'approve')}
+                            >
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs text-gray-400 hover:text-red-600"
+                              onClick={() => handleAction(action._id, 'reject')}
+                            >
+                              <X className="h-3 w-3 mr-1" />
+                              Reject
+                            </Button>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -292,6 +363,31 @@ function ClientDetails() {
           </div>
         </div>
       </div>
+
+      <AddMeetingModal
+        open={isMeetingModalOpen}
+        onOpenChange={setIsMeetingModalOpen}
+        initialData={meetingModalData}
+        onMeetingCreated={() => {
+          if (selectedActionId) {
+            api(`/action/${selectedActionId}`, { method: 'DELETE' }).then(() =>
+              window.location.reload(),
+            )
+          }
+        }}
+      />
+      <EmailComposerModal
+        open={isEmailModalOpen}
+        onOpenChange={setIsEmailModalOpen}
+        initialData={emailModalData}
+        onEmailSent={() => {
+          if (selectedActionId) {
+            api(`/action/${selectedActionId}`, { method: 'DELETE' }).then(() =>
+              window.location.reload(),
+            )
+          }
+        }}
+      />
     </div>
   )
 }
