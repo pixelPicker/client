@@ -25,7 +25,10 @@ function CalendarPage() {
   }, [searchTerm])
 
   const { data: meetingsResponse, isLoading, error } = useCalendar(debouncedSearch, page, 10, 'upcoming')
+  const { data: allMeetingsResponse } = useCalendar('', 1, 1000, 'all') // Fetch full history for the calendar widget dots
+
   const meetings = meetingsResponse?.data || []
+  const allMeetings = allMeetingsResponse?.data || []
   const totalPages = meetingsResponse?.totalPages || 1
 
   const upcomingMeetings = meetings
@@ -50,7 +53,7 @@ function CalendarPage() {
 
         {/* Left Side: Calendar - 1/4 width */}
         <div className="lg:col-span-1 h-full min-h-[500px]">
-          <CalendarWidget meetings={meetings} />
+          <CalendarWidget meetings={allMeetings} />
         </div>
 
         {/* Right Side: Meetings - 3/4 width */}
