@@ -12,10 +12,9 @@ export const Route = createFileRoute('/dashboard')({
   component: DashboardLayout,
 })
 
+import { LiveClock } from '../../components/LiveClock'
 import { Protected } from '../../components/Protected'
 import { useLogout } from '../../hooks/useAuth'
-
-// ... existing imports
 
 function DashboardLayout() {
   const logout = useLogout()
@@ -86,6 +85,7 @@ function DashboardLayout() {
                 </Link>
               </nav>
               <div className="flex items-center space-x-4">
+                <LiveClock />
                 <button className="p-2 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500">
                   <span className="sr-only">View notifications</span>
                   <Bell className="h-6 w-6" />

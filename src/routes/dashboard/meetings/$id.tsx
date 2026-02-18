@@ -49,11 +49,12 @@ function MeetingDetails() {
 
   useEffect(() => {
     if (actions && meeting) {
+      const getId = (id: any) => (typeof id === 'object' && id !== null ? id._id : id);
       const aiActions = actions.filter(
         (a) =>
           a.source === 'ai' &&
           a.status === 'pending' &&
-          a.meetingId === meeting._id,
+          getId(a.meetingId) === meeting._id,
       )
       setPendingActions(aiActions)
     }
@@ -68,14 +69,18 @@ function MeetingDetails() {
   const handleAction = async (actionId: string, type: 'approve' | 'reject') => {
     if (!meeting) return;
     try {
+      const getObjId = (obj: any) => (typeof obj === 'object' && obj !== null ? obj._id : obj);
+
       if (type === 'approve') {
         const action = pendingActions.find(a => a._id === actionId);
-        if (action && action.type === 'schedule') {
+        if (!action) return;
+
+        if (action.type === 'schedule') {
           setMeetingModalData({
             title: action.suggestedData.title,
             dateTime: action.suggestedData.dateTime,
-            clientId: (meeting.clientId as any)._id,
-            dealId: (meeting.dealId as any)?._id,
+            clientId: getObjId(meeting.clientId),
+            dealId: getObjId(meeting.dealId),
             notes: `Follow-up from meeting: ${meeting.title}`
           });
           setSelectedActionId(actionId);
@@ -83,7 +88,7 @@ function MeetingDetails() {
           return;
         }
 
-        if (action && action.type === 'email') {
+        if (action.type === 'email') {
           setEmailModalData({
             to: (meeting.clientId as any).email || '',
             subject: action.suggestedData.subject,
@@ -105,6 +110,7 @@ function MeetingDetails() {
       setPendingActions((prev) => prev.filter((a) => a._id !== actionId))
     } catch (err) {
       console.error("Failed to process action", err)
+      alert("Failed to process action. Please try again.")
     }
   }
 
@@ -388,11 +394,12 @@ function MeetingDetails() {
                   <div className="text-sm text-gray-700 space-y-1">
                     {insights.actions && Array.isArray(insights.actions) ? (
                       insights.actions.map((act: any, i: number) => {
-                        const pending = pendingActions.find(pa =>
-                          (pa.suggestedData?.title?.toLowerCase() === act.title?.toLowerCase()) ||
-                          (pa.suggestedData?.task?.toLowerCase() === act.title?.toLowerCase()) ||
-                          (pa.type === act.type && pa.suggestedData?.title === act.title)
-                        );
+                        const pending = pendingActions.find(pa => {
+                          const actionTitleMatch = pa.suggestedData?.title?.toLowerCase() === act.title?.toLowerCase() ||
+                            pa.suggestedData?.task?.toLowerCase() === act.title?.toLowerCase();
+                          const actionTypeMatch = pa.type === act.type;
+                          return (actionTitleMatch || (actionTypeMatch && pa.suggestedData?.title === act.title)) && actionTypeMatch;
+                        });
                         return (
                           <div
                             key={i}

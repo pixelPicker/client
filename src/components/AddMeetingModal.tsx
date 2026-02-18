@@ -56,7 +56,24 @@ export function AddMeetingModal({ open, onOpenChange, initialData, onMeetingCrea
         title: initialData?.title || '',
         clientId: initialData?.clientId || '',
         dealId: initialData?.dealId || '',
-        dateTime: initialData?.dateTime ? new Date(initialData.dateTime).toISOString().slice(0, 16) : '', // Format for datetime-local
+        dateTime: (() => {
+          if (!initialData?.dateTime) return '';
+          try {
+            const date = new Date(initialData.dateTime);
+            if (isNaN(date.getTime())) return '';
+
+            // Format to YYYY-MM-DDTHH:mm for datetime-local
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+          } catch (e) {
+            return '';
+          }
+        })(),
         notes: initialData?.notes || '',
       })
     }

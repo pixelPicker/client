@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { useState, useEffect } from 'react'
 
 export const Route = createFileRoute('/dashboard/')({
   component: RouteComponent,
@@ -14,6 +15,13 @@ import { useDeals } from '../../hooks/useDeals'
 import { useCalendar } from '../../hooks/useMeetings'
 
 function RouteComponent() {
+  const [now, setNow] = useState(new Date())
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60000)
+    return () => clearInterval(timer)
+  }, [])
+
   const { data: clientsData, isLoading: clientsLoading } = useContacts('', 1, 1000)
   const { data: dealsData, isLoading: dealsLoading } = useDeals('', 1, 1000)
   const { data: meetingsData, isLoading: meetingsLoading } = useCalendar('', 1, 1000)
@@ -34,9 +42,9 @@ function RouteComponent() {
   const activeDeals = deals?.filter((d) => d.status === 'active').length || 0
   const closedDeals = deals?.filter((d) => d.status === 'closed').length || 0
   const upcomingMeetings =
-    meetings?.filter((m) => new Date(m.dateTime) > new Date()).length || 0
+    meetings?.filter((m) => new Date(m.dateTime) > now).length || 0
   const nextMeeting = meetings
-    ?.filter((m) => new Date(m.dateTime) > new Date())
+    ?.filter((m) => new Date(m.dateTime) > now)
     .sort(
       (a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime(),
     )[0]

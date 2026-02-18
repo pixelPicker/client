@@ -1,17 +1,16 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useCalendar } from '../../hooks/useMeetings'
 import { Calendar as CalendarIcon, Loader2, Plus, Search } from 'lucide-react'
 import { AddMeetingModal } from '../../components/AddMeetingModal'
 import { Pagination } from '../../components/ui/pagination'
-import { useEffect } from 'react'
+import { CalendarWidget } from '../../components/CalendarWidget'
 
 export const Route = createFileRoute('/dashboard/calendar')({
   component: CalendarPage,
 })
 
 function CalendarPage() {
-  const [view, setView] = useState<'month' | 'week' | 'day'>('month')
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [page, setPage] = useState(1)
@@ -21,7 +20,7 @@ function CalendarPage() {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchTerm)
       setPage(1)
-    }, 500)
+    }, 300)
     return () => clearTimeout(timer)
   }, [searchTerm])
 
@@ -48,31 +47,10 @@ function CalendarPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Left Side: Calendar - 1/4 width */}
-        <div className="lg:col-span-1 bg-white rounded-xl border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Calendar View
-            </h2>
-            <select
-              value={view}
-              onChange={(e) =>
-                setView(e.target.value as 'month' | 'week' | 'day')
-              }
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
-            >
-              <option value="month">Month</option>
-              <option value="week">Week</option>
-              <option value="day">Day</option>
-            </select>
-          </div>
 
-          {/* Simple Month Calendar Placeholder */}
-          <div className="text-center text-gray-500">
-            <CalendarIcon className="h-24 w-24 mx-auto mb-4 text-gray-300" />
-            <p>{view.charAt(0).toUpperCase() + view.slice(1)} view calendar</p>
-            <p className="text-sm">Calendar component would go here</p>
-          </div>
+        {/* Left Side: Calendar - 1/4 width */}
+        <div className="lg:col-span-1 h-full min-h-[500px]">
+          <CalendarWidget meetings={meetings} />
         </div>
 
         {/* Right Side: Meetings - 3/4 width */}
