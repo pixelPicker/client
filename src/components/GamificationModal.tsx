@@ -2,12 +2,9 @@ import { useMomentum, useStreaks } from '../hooks/useMomentum'
 import {
     Dialog,
     DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription,
 } from './ui/dialog'
 import { Progress } from './ui/progress'
-import { Trophy, Star, Target, Flame, Calendar, Award, Zap } from 'lucide-react'
+import { Trophy, Star, Flame, Calendar, Award, Zap } from 'lucide-react'
 
 interface GamificationModalProps {
     open: boolean

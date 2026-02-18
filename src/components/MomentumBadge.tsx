@@ -1,10 +1,5 @@
 import { useMomentum } from '../hooks/useMomentum'
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from './ui/tooltip'
+
 
 const LEVEL_STYLES = {
     Rising: {
@@ -55,57 +50,47 @@ export function MomentumBadge() {
 
     return (
         <>
-            <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <button
-                            onClick={() => setIsModalOpen(true)}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${style.bg} ${style.border} hover:shadow-md transition-all active:scale-95`}
-                        >
-                            {/* Career Level Circle */}
-                            <div className="relative w-6 h-6 flex items-center justify-center">
-                                <svg className="absolute w-full h-full -rotate-90">
-                                    <circle
-                                        cx="12"
-                                        cy="12"
-                                        r="10"
-                                        fill="none"
-                                        className="stroke-gray-200"
-                                        strokeWidth="2"
-                                    />
-                                    <circle
-                                        cx="12"
-                                        cy="12"
-                                        r="10"
-                                        fill="none"
-                                        className="stroke-cyan-500"
-                                        strokeWidth="2"
-                                        strokeDasharray={`${(career.currentLevelProgress / career.nextLevelXp) * 63} 63`}
-                                        strokeLinecap="round"
-                                    />
-                                </svg>
-                                <span className="text-[9px] font-bold text-gray-700 relative z-10">{career.level}</span>
-                            </div>
+            <button
+                onClick={() => setIsModalOpen(true)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${style.bg} ${style.border} hover:shadow-md transition-all active:scale-95`}
+            >
+                {/* Career Level Circle */}
+                <div className="relative w-6 h-6 flex items-center justify-center">
+                    <svg className="absolute w-full h-full -rotate-90">
+                        <circle
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            fill="none"
+                            className="stroke-gray-200"
+                            strokeWidth="2"
+                        />
+                        <circle
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            fill="none"
+                            className="stroke-cyan-500"
+                            strokeWidth="2"
+                            strokeDasharray={`${(career.currentLevelProgress / career.nextLevelXp) * 63} 63`}
+                            strokeLinecap="round"
+                        />
+                    </svg>
+                    <span className="text-[9px] font-bold text-gray-700 relative z-10">{career.level}</span>
+                </div>
 
-                            {/* Weekly Status Emoji */}
-                            <span
-                                className={`text-sm ${style.pulse ? 'animate-pulse' : ''}`}
-                            >
-                                {data.emoji}
-                            </span>
+                {/* Weekly Status Emoji */}
+                <span
+                    className={`text-sm ${style.pulse ? 'animate-pulse' : ''}`}
+                >
+                    {data.emoji}
+                </span>
 
-                            {/* Momentum Label (Hidden on mobile if needed, but kept for now) */}
-                            <span className={`text-xs font-semibold ${style.text} hidden sm:inline`}>
-                                {data.level}
-                            </span>
-                        </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="text-xs">
-                        <p className="font-bold">Career Level {career.level}</p>
-                        <p>Click to view achievements & stats</p>
-                    </TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
+                {/* Momentum Label (Hidden on mobile if needed, but kept for now) */}
+                <span className={`text-xs font-semibold ${style.text} hidden sm:inline`}>
+                    {data.level}
+                </span>
+            </button>
 
             <GamificationModal open={isModalOpen} onOpenChange={setIsModalOpen} />
         </>
