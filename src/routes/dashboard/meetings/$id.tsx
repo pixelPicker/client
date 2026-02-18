@@ -1,12 +1,12 @@
 import { createFileRoute, useParams, useNavigate, Link } from '@tanstack/react-router'
-import { ArrowLeft, Users, Calendar, Loader2, CheckCircle, AlertTriangle, Clock, ArrowRight, X, Bell } from 'lucide-react'
+import { ArrowLeft, Users, Calendar, Loader2, CheckCircle, AlertTriangle, Clock, ArrowRight, X, Bell, Trash2 } from 'lucide-react'
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '../../../components/ui/tooltip'
-import { useMeeting, useActions, useUpdateMeeting } from '../../../hooks/useMeetings'
+import { useMeeting, useActions, useUpdateMeeting, useDeleteMeeting } from '../../../hooks/useMeetings'
 import { useState, useEffect } from 'react'
 import { api } from '../../../lib/api'
 import { Button } from '../../../components/ui/button'
@@ -46,6 +46,7 @@ function MeetingDetails() {
   const [isEditingTranscript, setIsEditingTranscript] = useState(false)
   const [editedTranscript, setEditedTranscript] = useState('')
   const updateMeeting = useUpdateMeeting()
+  const deleteMeeting = useDeleteMeeting()
 
   useEffect(() => {
     if (actions && meeting) {
@@ -64,6 +65,20 @@ function MeetingDetails() {
       setEditedTranscript(meeting.transcript)
     }
   }, [meeting])
+
+  const handleDeleteMeeting = async () => {
+    if (!meeting) return;
+
+    if (window.confirm("Are you sure you want to delete this meeting? This action cannot be undone.")) {
+      try {
+        await deleteMeeting.mutateAsync(meeting._id);
+        navigate({ to: '/dashboard/calendar' });
+      } catch (err) {
+        console.error("Failed to delete meeting", err);
+        alert("Failed to delete meeting");
+      }
+    }
+  }
 
   const handleAnalyzeClick = async (isReanalysis = false) => {
     if (!meeting) return;
@@ -89,7 +104,10 @@ function MeetingDetails() {
     }
   }
 
+  // ... (handleAction function unchanged) ...
+
   const handleAction = async (actionId: string, type: 'approve' | 'reject') => {
+    // ... implementation ...
     if (!meeting) return;
     try {
       const getObjId = (obj: any) => (typeof obj === 'object' && obj !== null ? obj._id : obj);
@@ -186,6 +204,29 @@ function MeetingDetails() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-gray-400 hover:text-red-600 hover:bg-red-50 border-gray-200"
+                  onClick={handleDeleteMeeting}
+                  disabled={deleteMeeting.isPending}
+                >
+                  {deleteMeeting.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Delete meeting</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
           {/* Go Live button - future only */}
           {new Date(meeting.dateTime) > new Date() ? (
             <Link

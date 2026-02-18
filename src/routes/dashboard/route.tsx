@@ -32,7 +32,7 @@ function DashboardLayout() {
             <div className="flex justify-between h-16">
               <div className="flex-shrink-0 flex items-center">
                 <span className="text-xl font-bold text-gray-900 tracking-tight">
-                  Spaghetti 🍝
+                  DealForge
                 </span>
               </div>
               <nav className="hidden flex-1 justify-center sm:flex ">

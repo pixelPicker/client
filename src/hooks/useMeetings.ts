@@ -70,6 +70,22 @@ export const useUpdateMeeting = () => {
   })
 }
 
+export const useDeleteMeeting = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await api(`/meeting/${id}`, {
+        method: 'DELETE',
+      })
+      return response
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['meetings'] })
+      queryClient.invalidateQueries({ queryKey: ['calendar'] })
+    },
+  })
+}
+
 export const useCalendar = (search = '', page = 1, limit = 10, timeframe = 'all') => {
   return useQuery({
     queryKey: ['calendar', search, page, limit, timeframe],
