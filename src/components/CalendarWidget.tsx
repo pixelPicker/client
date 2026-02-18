@@ -12,9 +12,11 @@ interface Meeting {
 
 interface CalendarWidgetProps {
     meetings?: Meeting[]
+    limit?: number
+    showMoreLink?: string
 }
 
-export function CalendarWidget({ meetings = [] }: CalendarWidgetProps) {
+export function CalendarWidget({ meetings = [], limit, showMoreLink }: CalendarWidgetProps) {
     const [currentDate, setCurrentDate] = useState(new Date())
     const [selectedDate, setSelectedDate] = useState<Date | null>(new Date())
     const [isAddMeetingOpen, setIsAddMeetingOpen] = useState(false)
@@ -84,7 +86,17 @@ export function CalendarWidget({ meetings = [] }: CalendarWidgetProps) {
 
     const selectedMeetings = useMemo(() => {
         if (!selectedDate) return []
-        return meetings.filter((m) => isSameDay(new Date(m.dateTime), selectedDate))
+        let filtered = meetings.filter((m) => isSameDay(new Date(m.dateTime), selectedDate))
+        // If limit is provided, only take that many
+        if (limit && filtered.length > limit) {
+            return filtered.slice(0, limit)
+        }
+        return filtered
+    }, [selectedDate, meetings, limit])
+
+    const totalMeetingsForDay = useMemo(() => {
+        if (!selectedDate) return 0
+        return meetings.filter((m) => isSameDay(new Date(m.dateTime), selectedDate)).length
     }, [selectedDate, meetings])
 
     return (
@@ -198,6 +210,15 @@ export function CalendarWidget({ meetings = [] }: CalendarWidgetProps) {
                                 </div>
                             </Link>
                         ))}
+
+                        {limit && totalMeetingsForDay > limit && showMoreLink && (
+                            <Link
+                                to={showMoreLink}
+                                className="block text-center text-xs font-medium text-cyan-600 hover:text-cyan-700 hover:underline pt-2"
+                            >
+                                Show {totalMeetingsForDay - limit} more meetings
+                            </Link>
+                        )}
                     </div>
                 ) : (
                     <div className="text-center py-8 text-gray-400 text-sm">

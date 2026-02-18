@@ -153,7 +153,7 @@ function RouteComponent() {
       <div className="lg:col-span-1 h-full">
         {/* Removed fixed height constraint to let it grow */}
         <div className="h-full min-h-[400px]">
-          <CalendarWidget meetings={meetings} />
+          <CalendarWidget meetings={meetings} limit={4} showMoreLink="/dashboard/calendar" />
 
         </div>
       </div>
