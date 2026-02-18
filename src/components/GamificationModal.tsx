@@ -4,7 +4,7 @@ import {
     DialogContent,
 } from './ui/dialog'
 import { Progress } from './ui/progress'
-import { Trophy, Star, Flame, Calendar, Award, Zap } from 'lucide-react'
+import { Trophy, Star, Flame, Calendar, MapPin, Zap, Lock, Medal } from 'lucide-react'
 
 interface GamificationModalProps {
     open: boolean
@@ -22,95 +22,118 @@ export function GamificationModal({ open, onOpenChange }: GamificationModalProps
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl bg-white p-0 overflow-hidden gap-0">
-                {/* Header with Level & XP */}
-                <div className="bg-gradient-to-r from-cyan-600 to-blue-600 p-8 text-white relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-4 opacity-10">
-                        <Trophy className="h-64 w-64" />
+            <DialogContent className="max-w-4xl h-[600px] p-0 overflow-hidden flex gap-0 border-0 rounded-2xl shadow-2xl">
+                {/* Left Panel: Profile & Stats (Dark Gradient) */}
+                <div className="w-[35%] bg-gradient-to-br from-slate-900 to-slate-800 text-white p-8 flex flex-col justify-between relative overflow-hidden">
+                    {/* Background Pattern */}
+                    <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl" />
+                    <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl" />
+
+                    <div className="relative z-10">
+                        <div className="flex items-center gap-2 text-cyan-400 font-medium text-xs uppercase tracking-widest mb-6">
+                            <Star className="w-3 h-3" />
+                            Career Profile
+                        </div>
+
+                        <div className="text-center mb-8">
+                            <div className="relative w-32 h-32 mx-auto mb-4 flex items-center justify-center">
+                                {/* Level Ring */}
+                                <svg className="w-full h-full -rotate-90">
+                                    <circle cx="64" cy="64" r="60" fill="none" stroke="currentColor" className="text-slate-700" strokeWidth="4" />
+                                    <circle
+                                        cx="64" cy="64" r="60" fill="none" stroke="currentColor"
+                                        className="text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]"
+                                        strokeWidth="4"
+                                        strokeDasharray={`${(progressPercentage / 100) * 377} 377`}
+                                        strokeLinecap="round"
+                                    />
+                                </svg>
+                                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                    <span className="text-5xl font-bold">{career.level}</span>
+                                    <span className="text-xs text-slate-400 font-medium uppercase mt-1">Level</span>
+                                </div>
+                            </div>
+                            <h2 className="text-2xl font-bold text-white mb-1">{Math.round(career.xp).toLocaleString()} XP</h2>
+                            <p className="text-slate-400 text-xs text-center px-4">
+                                {Math.round(career.nextLevelXp - career.currentLevelProgress)} XP to next level
+                            </p>
+                        </div>
                     </div>
 
-                    <div className="relative z-10 flex items-center justify-between">
-                        <div>
-                            <p className="text-cyan-100 text-sm font-medium uppercase tracking-wider mb-1">Career Level</p>
-                            <h2 className="text-5xl font-bold mb-2">Level {career.level}</h2>
-                            <div className="flex items-center gap-2 text-cyan-100 text-sm">
-                                <Star className="h-4 w-4 fill-cyan-100" />
-                                <span>{Math.round(career.xp)} Total XP</span>
+                    <div className="space-y-4 relative z-10 w-full">
+                        <div className="bg-white/5 backdrop-blur-md rounded-xl p-4 border border-white/10">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs text-slate-400">Current Momentum</span>
+                                <span className="text-xs font-bold text-emerald-400">{momentum.level}</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <span className="text-3xl">{momentum.emoji}</span>
+                                <div className="flex-1">
+                                    <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden flex gap-0.5">
+                                        {[1, 2, 3, 4, 5].map(i => (
+                                            <div
+                                                key={i}
+                                                className={`flex-1 rounded-full ${i <= momentum.filledDots ? 'bg-emerald-500' : 'bg-slate-700'}`}
+                                            />
+                                        ))}
+                                    </div>
+                                    <p className="text-[10px] text-slate-500 mt-1.5 text-right">Last 7 Days Activity</p>
+                                </div>
                             </div>
                         </div>
-                        <div className="text-right">
-                            <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3 border border-white/30 text-center min-w-[100px]">
-                                <p className="text-3xl font-bold">{momentum.emoji}</p>
-                                <p className="text-xs font-medium uppercase mt-1">{momentum.level}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="mt-8 relative z-10">
-                        <div className="flex justify-between text-xs font-medium text-cyan-100 mb-2">
-                            <span>{Math.round(career.currentLevelProgress)} XP</span>
-                            <span>{Math.round(career.nextLevelXp)} XP to Level {career.level + 1}</span>
-                        </div>
-                        <Progress value={progressPercentage} className="h-3 bg-black/20" indicatorClassName="bg-yellow-400" />
                     </div>
                 </div>
 
-                <div className="p-6 max-h-[60vh] overflow-y-auto">
-                    {/* Activity Streaks Summary */}
-                    {streaks && (
-                        <div className="grid grid-cols-3 gap-4 mb-8">
-                            <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 flex flex-col items-center text-center">
-                                <Flame className="h-6 w-6 text-orange-500 mb-2" />
-                                <span className="text-2xl font-bold text-gray-900">{streaks.followupStreak}</span>
-                                <span className="text-xs text-gray-500">Day Streak</span>
-                            </div>
-                            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex flex-col items-center text-center">
-                                <Calendar className="h-6 w-6 text-blue-500 mb-2" />
-                                <span className="text-2xl font-bold text-gray-900">{streaks.preparedCallStreak}</span>
-                                <span className="text-xs text-gray-500">Prepared Calls</span>
-                            </div>
-                            <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 flex flex-col items-center text-center">
-                                <Zap className="h-6 w-6 text-emerald-500 mb-2" />
-                                <span className="text-2xl font-bold text-gray-900">{streaks.activeDealStreak}</span>
-                                <span className="text-xs text-gray-500">Active Days</span>
-                            </div>
+                {/* Right Panel: Content (White/Light) */}
+                <div className="w-[65%] bg-white p-8 flex flex-col overflow-hidden">
+                    {/* Streaks Row */}
+                    <div className="mb-8">
+                        <h3 className="text-gray-900 font-bold text-sm uppercase tracking-wide mb-4 flex items-center gap-2">
+                            <Flame className="w-4 h-4 text-orange-500" />
+                            Current Streaks
+                        </h3>
+                        <div className="grid grid-cols-3 gap-3">
+                            {streaks && (
+                                <>
+                                    <StreakCard icon="🔁" value={streaks.followupStreak} label="Follow-ups" color="bg-orange-50 text-orange-700 border-orange-100" />
+                                    <StreakCard icon="📞" value={streaks.preparedCallStreak} label="Prepared" color="bg-blue-50 text-blue-700 border-blue-100" />
+                                    <StreakCard icon="⚡" value={streaks.activeDealStreak} label="Active Days" color="bg-purple-50 text-purple-700 border-purple-100" />
+                                </>
+                            )}
                         </div>
-                    )}
+                    </div>
 
                     {/* Achievements Grid */}
-                    <div>
-                        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                            <Award className="h-5 w-5 text-purple-600" />
+                    <div className="flex-1 overflow-hidden flex flex-col">
+                        <h3 className="text-gray-900 font-bold text-sm uppercase tracking-wide mb-4 flex items-center gap-2">
+                            <Trophy className="w-4 h-4 text-yellow-500" />
                             Achievements
                         </h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                        <div className="flex-1 overflow-y-auto pr-2 -mr-2 space-y-3">
                             {achievements.map((ach) => (
                                 <div
                                     key={ach.id}
-                                    className={`flex items-start gap-4 p-4 rounded-xl border ${ach.locked
+                                    className={`group flex items-center gap-4 p-3 rounded-xl border transition-all duration-200 ${ach.locked
                                         ? 'bg-gray-50 border-gray-100 opacity-60 grayscale'
-                                        : 'bg-white border-purple-100 shadow-sm'}`}
+                                        : 'bg-white border-gray-100 shadow-sm hover:shadow-md hover:border-cyan-100 hover:bg-cyan-50/30'}`}
                                 >
-                                    <div className={`text-3xl ${ach.locked ? 'opacity-50' : ''}`}>
-                                        {ach.icon}
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg shadow-sm ${ach.locked ? 'bg-gray-200 text-gray-400' : 'bg-gradient-to-br from-white to-gray-50 border border-gray-100'}`}>
+                                        {ach.locked ? <Lock className="w-4 h-4" /> : ach.icon}
                                     </div>
-                                    <div>
-                                        <h4 className={`font-bold ${ach.locked ? 'text-gray-500' : 'text-gray-900'}`}>
-                                            {ach.name}
-                                        </h4>
-                                        <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-                                            {ach.description}
-                                        </p>
-                                        {!ach.locked && ach.unlockedAt && (
-                                            <p className="text-[10px] text-purple-600 font-medium mt-2">
-                                                Unlocked {new Date(ach.unlockedAt).toLocaleDateString()}
-                                            </p>
-                                        )}
-                                        {ach.locked && (
-                                            <p className="text-[10px] text-gray-400 font-medium mt-2">
-                                                Locked
-                                            </p>
-                                        )}
+
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center justify-between mb-0.5">
+                                            <h4 className={`font-bold text-sm truncate ${ach.locked ? 'text-gray-500' : 'text-gray-900'}`}>
+                                                {ach.name}
+                                            </h4>
+                                            {!ach.locked && ach.unlockedAt && (
+                                                <span className="text-[10px] font-medium text-cyan-600 bg-cyan-50 px-2 py-0.5 rounded-full">
+                                                    {new Date(ach.unlockedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="text-xs text-gray-500 truncate">{ach.description}</p>
                                     </div>
                                 </div>
                             ))}
@@ -119,5 +142,14 @@ export function GamificationModal({ open, onOpenChange }: GamificationModalProps
                 </div>
             </DialogContent>
         </Dialog>
+    )
+}
+
+function StreakCard({ icon, value, label, color }: { icon: string, value: number, label: string, color: string }) {
+    return (
+        <div className={`rounded-xl border p-3 flex flex-col items-center justify-center text-center ${color}`}>
+            <span className="text-xl font-black mb-1">{value}</span>
+            <span className="text-[10px] font-medium opacity-80 uppercase tracking-tight">{label}</span>
+        </div>
     )
 }
