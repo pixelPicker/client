@@ -116,7 +116,7 @@ function CalendarPage() {
                       </p>
                       {meeting.clientId && (
                         <p className="text-sm text-gray-700 mt-2">
-                          {meeting.clientId.name} - {meeting.clientId.company}
+                          {meeting.clientId?.name} - {meeting.clientId?.company}
                         </p>
                       )}
                     </div>

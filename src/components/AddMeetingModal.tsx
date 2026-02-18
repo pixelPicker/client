@@ -35,7 +35,7 @@ export function AddMeetingModal({ open, onOpenChange, initialData, onMeetingCrea
     error,
   } = useCreateMeeting()
   const { data: contactsResponse } = useContacts('', 1, 100)
-  const { data: dealsResponse } = useDeals('', 1, 100)
+  const { data: dealsResponse } = useDeals('', 1, 'all', 100)
   const { data: calendarResponse } = useCalendar('', 1, 1000, 'all')
   const contacts = contactsResponse?.data || []
   const deals = dealsResponse?.data || []
@@ -83,7 +83,7 @@ export function AddMeetingModal({ open, onOpenChange, initialData, onMeetingCrea
   }, [open, initialData])
 
   const availableDeals =
-    deals?.filter((d) => d.clientId._id === formData.clientId) || []
+    deals?.filter((d) => d.clientId?._id === formData.clientId) || []
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
