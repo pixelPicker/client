@@ -1,6 +1,7 @@
 import { createFileRoute, useParams, useNavigate, Link } from '@tanstack/react-router'
 import { useContact } from '../../../hooks/useContacts'
 import { useMeetings, useActions } from '../../../hooks/useMeetings'
+import { useDeals } from '../../../hooks/useDeals'
 import {
   ArrowLeft,
   Calendar,
@@ -30,6 +31,8 @@ function ClientDetails() {
   } = useContact(id)
   const { data: meetings, isLoading: meetingsLoading } = useMeetings(id)
   const { data: actions, isLoading: actionsLoading } = useActions(id)
+  const { data: dealsData, isLoading: dealsLoading } = useDeals('', 1, 'all', 10, id)
+  const deals = dealsData?.data || []
 
   const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false)
   const [meetingModalData, setMeetingModalData] = useState<any>(null)
@@ -149,25 +152,35 @@ function ClientDetails() {
                 <div className="p-2 bg-green-100 rounded-lg">
                   <Building className="h-5 w-5 text-green-600" />
                 </div>
-                <h3 className="font-semibold text-gray-900">Deal Status</h3>
+                <h3 className="font-semibold text-gray-900">Active Deals</h3>
               </div>
-              <div className="space-y-2">
-                <span
-                  className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${client.dealStage === 'Closed Won'
-                    ? 'bg-green-100 text-green-800'
-                    : client.dealStage === 'Negotiation'
-                      ? 'bg-blue-100 text-blue-800'
-                      : client.dealStage === 'Lost'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}
-                >
-                  {client.dealStage}
-                </span>
-                {client.dealValue && (
-                  <p className="text-gray-600 font-medium">
-                    ${client.dealValue.toLocaleString()}
-                  </p>
+              <div className="space-y-3">
+                {dealsLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                ) : deals.length > 0 ? (
+                  deals.map((deal: any) => (
+                    <Link
+                      key={deal._id}
+                      to="/dashboard/deals/$id"
+                      params={{ id: deal._id }}
+                      className="block p-2 rounded-lg hover:bg-gray-50 border border-gray-100 transition-colors"
+                    >
+                      <p className="font-medium text-gray-900 text-sm">{deal.title}</p>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${deal.stage === 'Closed Won' ? 'bg-green-100 text-green-800' :
+                          deal.stage === 'Closed Lost' ? 'bg-red-100 text-red-800' :
+                            'bg-blue-50 text-blue-700'
+                          }`}>
+                          {deal.stage}
+                        </span>
+                        <span className="text-xs font-semibold text-gray-700">
+                          ${deal.value?.toLocaleString()}
+                        </span>
+                      </div>
+                    </Link>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500 italic">No active deals found.</p>
                 )}
               </div>
             </div>

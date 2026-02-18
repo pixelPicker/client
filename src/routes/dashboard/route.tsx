@@ -18,8 +18,11 @@ import { Protected } from '../../components/Protected'
 import { useLogout } from '../../hooks/useAuth'
 import { MomentumBadge } from '../../components/MomentumBadge'
 
+import { useMeetingReminders } from '../../hooks/useMeetingReminders'
+
 function DashboardLayout() {
   const logout = useLogout()
+  useMeetingReminders()
 
   return (
     <Protected>
@@ -87,6 +90,7 @@ function DashboardLayout() {
                 </Link>
                 <Link
                   to="/dashboard/meetings/live"
+                  search={{ meetingId: '', title: '' }}
                   activeProps={{ className: 'border-red-500 text-red-600' }}
                   inactiveProps={{
                     className:

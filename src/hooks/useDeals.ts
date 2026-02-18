@@ -24,9 +24,9 @@ export interface PaginatedDeals {
     currentPage: number
 }
 
-export const useDeals = (search = '', page = 1, stage = 'all', limit = 10) => {
+export const useDeals = (search = '', page = 1, stage = 'all', limit = 10, clientId = '') => {
     return useQuery({
-        queryKey: ['deals', search, page, stage, limit],
+        queryKey: ['deals', search, page, stage, limit, clientId],
         queryFn: async () => {
             const queryParams = new URLSearchParams({
                 search,
@@ -35,6 +35,9 @@ export const useDeals = (search = '', page = 1, stage = 'all', limit = 10) => {
             })
             if (stage && stage !== 'all') {
                 queryParams.append('stage', stage)
+            }
+            if (clientId) {
+                queryParams.append('clientId', clientId)
             }
             const response = await api(`/deal?${queryParams}`)
             return response as unknown as PaginatedDeals

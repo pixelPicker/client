@@ -13,7 +13,7 @@ import { CalendarWidget } from '../../components/CalendarWidget'
 import { useContacts } from '../../hooks/useContacts'
 import { useDeals } from '../../hooks/useDeals'
 import { useCalendar } from '../../hooks/useMeetings'
-import { StreaksPanel } from '../../components/StreaksPanel'
+import { ObjectionHandlingPanel } from '../../components/ObjectionHandlingPanel'
 
 function RouteComponent() {
   const [now, setNow] = useState(new Date())
@@ -144,8 +144,8 @@ function RouteComponent() {
 
 
 
-        {/* Activity Streaks */}
-        <StreaksPanel />
+        {/* Objection Handling / Insights */}
+        <ObjectionHandlingPanel meetings={meetings} />
       </div>
 
 
