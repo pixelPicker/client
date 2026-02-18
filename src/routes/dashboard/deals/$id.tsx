@@ -14,6 +14,7 @@ import ReactMarkdown from 'react-markdown'
 import { useState } from 'react'
 import { AddMeetingModal } from '../../../components/AddMeetingModal'
 import { EmailComposerModal } from '../../../components/EmailComposerModal'
+import { CoachCard } from '../../../components/CoachCard'
 import { Button } from '@/components/ui/button'
 import { X } from 'lucide-react'
 import {
@@ -253,6 +254,7 @@ function DealDetails() {
         <Tabs defaultValue="actions" className="w-full">
           <TabsList>
             <TabsTrigger value="actions">Actions</TabsTrigger>
+            <TabsTrigger value="coach">🧠 Coach</TabsTrigger>
             <TabsTrigger value="ai">AI Bot</TabsTrigger>
           </TabsList>
 
@@ -341,6 +343,10 @@ function DealDetails() {
                 ))}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="coach" className="mt-6">
+            <CoachCard dealId={id} />
           </TabsContent>
 
           <TabsContent value="ai" className="mt-6">

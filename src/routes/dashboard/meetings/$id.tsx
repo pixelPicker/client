@@ -1,4 +1,4 @@
-import { createFileRoute, useParams, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useParams, useNavigate, Link } from '@tanstack/react-router'
 import { ArrowLeft, Users, Calendar, Loader2, CheckCircle, AlertTriangle, Clock, ArrowRight, X } from 'lucide-react'
 import {
   Tooltip,
@@ -186,6 +186,15 @@ function MeetingDetails() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {/* Go Live button */}
+          <Link
+            to="/dashboard/meetings/live"
+            search={{ meetingId: meeting._id, title: meeting.title }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-medium transition-colors"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
+            Go Live
+          </Link>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>

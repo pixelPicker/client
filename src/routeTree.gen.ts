@@ -17,6 +17,7 @@ import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as DashboardCalendarRouteImport } from './routes/dashboard/calendar'
 import { Route as DashboardDealsIndexRouteImport } from './routes/dashboard/deals/index'
 import { Route as DashboardClientsIndexRouteImport } from './routes/dashboard/clients/index'
+import { Route as DashboardMeetingsLiveRouteImport } from './routes/dashboard/meetings/live'
 import { Route as DashboardMeetingsIdRouteImport } from './routes/dashboard/meetings/$id'
 import { Route as DashboardDealsIdRouteImport } from './routes/dashboard/deals/$id'
 import { Route as DashboardClientsIdRouteImport } from './routes/dashboard/clients/$id'
@@ -61,6 +62,11 @@ const DashboardClientsIndexRoute = DashboardClientsIndexRouteImport.update({
   path: '/clients/',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
+const DashboardMeetingsLiveRoute = DashboardMeetingsLiveRouteImport.update({
+  id: '/meetings/live',
+  path: '/meetings/live',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
 const DashboardMeetingsIdRoute = DashboardMeetingsIdRouteImport.update({
   id: '/meetings/$id',
   path: '/meetings/$id',
@@ -87,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/clients/$id': typeof DashboardClientsIdRoute
   '/dashboard/deals/$id': typeof DashboardDealsIdRoute
   '/dashboard/meetings/$id': typeof DashboardMeetingsIdRoute
+  '/dashboard/meetings/live': typeof DashboardMeetingsLiveRoute
   '/dashboard/clients/': typeof DashboardClientsIndexRoute
   '/dashboard/deals/': typeof DashboardDealsIndexRoute
 }
@@ -99,6 +106,7 @@ export interface FileRoutesByTo {
   '/dashboard/clients/$id': typeof DashboardClientsIdRoute
   '/dashboard/deals/$id': typeof DashboardDealsIdRoute
   '/dashboard/meetings/$id': typeof DashboardMeetingsIdRoute
+  '/dashboard/meetings/live': typeof DashboardMeetingsLiveRoute
   '/dashboard/clients': typeof DashboardClientsIndexRoute
   '/dashboard/deals': typeof DashboardDealsIndexRoute
 }
@@ -113,6 +121,7 @@ export interface FileRoutesById {
   '/dashboard/clients/$id': typeof DashboardClientsIdRoute
   '/dashboard/deals/$id': typeof DashboardDealsIdRoute
   '/dashboard/meetings/$id': typeof DashboardMeetingsIdRoute
+  '/dashboard/meetings/live': typeof DashboardMeetingsLiveRoute
   '/dashboard/clients/': typeof DashboardClientsIndexRoute
   '/dashboard/deals/': typeof DashboardDealsIndexRoute
 }
@@ -128,6 +137,7 @@ export interface FileRouteTypes {
     | '/dashboard/clients/$id'
     | '/dashboard/deals/$id'
     | '/dashboard/meetings/$id'
+    | '/dashboard/meetings/live'
     | '/dashboard/clients/'
     | '/dashboard/deals/'
   fileRoutesByTo: FileRoutesByTo
@@ -140,6 +150,7 @@ export interface FileRouteTypes {
     | '/dashboard/clients/$id'
     | '/dashboard/deals/$id'
     | '/dashboard/meetings/$id'
+    | '/dashboard/meetings/live'
     | '/dashboard/clients'
     | '/dashboard/deals'
   id:
@@ -153,6 +164,7 @@ export interface FileRouteTypes {
     | '/dashboard/clients/$id'
     | '/dashboard/deals/$id'
     | '/dashboard/meetings/$id'
+    | '/dashboard/meetings/live'
     | '/dashboard/clients/'
     | '/dashboard/deals/'
   fileRoutesById: FileRoutesById
@@ -222,6 +234,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardClientsIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/meetings/live': {
+      id: '/dashboard/meetings/live'
+      path: '/meetings/live'
+      fullPath: '/dashboard/meetings/live'
+      preLoaderRoute: typeof DashboardMeetingsLiveRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
     '/dashboard/meetings/$id': {
       id: '/dashboard/meetings/$id'
       path: '/meetings/$id'
@@ -252,6 +271,7 @@ interface DashboardRouteRouteChildren {
   DashboardClientsIdRoute: typeof DashboardClientsIdRoute
   DashboardDealsIdRoute: typeof DashboardDealsIdRoute
   DashboardMeetingsIdRoute: typeof DashboardMeetingsIdRoute
+  DashboardMeetingsLiveRoute: typeof DashboardMeetingsLiveRoute
   DashboardClientsIndexRoute: typeof DashboardClientsIndexRoute
   DashboardDealsIndexRoute: typeof DashboardDealsIndexRoute
 }
@@ -262,6 +282,7 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardClientsIdRoute: DashboardClientsIdRoute,
   DashboardDealsIdRoute: DashboardDealsIdRoute,
   DashboardMeetingsIdRoute: DashboardMeetingsIdRoute,
+  DashboardMeetingsLiveRoute: DashboardMeetingsLiveRoute,
   DashboardClientsIndexRoute: DashboardClientsIndexRoute,
   DashboardDealsIndexRoute: DashboardDealsIndexRoute,
 }

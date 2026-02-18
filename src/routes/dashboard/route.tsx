@@ -6,6 +6,7 @@ import {
   Users,
   LayoutDashboard,
   Briefcase,
+  Mic,
 } from 'lucide-react'
 
 export const Route = createFileRoute('/dashboard')({
@@ -15,6 +16,7 @@ export const Route = createFileRoute('/dashboard')({
 import { LiveClock } from '../../components/LiveClock'
 import { Protected } from '../../components/Protected'
 import { useLogout } from '../../hooks/useAuth'
+import { MomentumBadge } from '../../components/MomentumBadge'
 
 function DashboardLayout() {
   const logout = useLogout()
@@ -83,8 +85,24 @@ function DashboardLayout() {
                   <Briefcase className="w-5 h-5 mr-2" />
                   Deals
                 </Link>
+                <Link
+                  to="/dashboard/meetings/live"
+                  activeProps={{ className: 'border-red-500 text-red-600' }}
+                  inactiveProps={{
+                    className:
+                      'border-transparent text-gray-500 hover:border-red-300 hover:text-red-600',
+                  }}
+                  className="inline-flex items-center px-8 pt-1 border-b-2 text-base font-medium"
+                >
+                  <Mic className="w-4 h-4 mr-1.5" />
+                  <span className="relative">
+                    Live
+                    <span className="absolute -top-1 -right-2 h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
+                  </span>
+                </Link>
               </nav>
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3">
+                <MomentumBadge />
                 <LiveClock />
                 <button className="p-2 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500">
                   <span className="sr-only">View notifications</span>

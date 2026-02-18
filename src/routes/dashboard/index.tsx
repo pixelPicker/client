@@ -13,6 +13,7 @@ import { CalendarWidget } from '../../components/CalendarWidget'
 import { useContacts } from '../../hooks/useContacts'
 import { useDeals } from '../../hooks/useDeals'
 import { useCalendar } from '../../hooks/useMeetings'
+import { StreaksPanel } from '../../components/StreaksPanel'
 
 function RouteComponent() {
   const [now, setNow] = useState(new Date())
@@ -141,10 +142,10 @@ function RouteComponent() {
           </div>
         </div>
 
-        {/* Placeholder for future insights/charts */}
-        <div className="bg-white p-6 rounded-xl min-h-[300px] flex items-center justify-center text-gray-400">
-          More insights coming soon...
-        </div>
+
+
+        {/* Activity Streaks */}
+        <StreaksPanel />
       </div>
 
 
