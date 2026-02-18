@@ -73,8 +73,8 @@ export function MomentumBadge() {
                                 <div
                                     key={i}
                                     className={`w-1.5 h-1.5 rounded-full transition-colors ${i < data.filledDots
-                                            ? style.dot
-                                            : 'bg-gray-200'
+                                        ? style.dot
+                                        : 'bg-gray-200'
                                         }`}
                                 />
                             ))}
@@ -82,31 +82,31 @@ export function MomentumBadge() {
                     </div>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="text-xs space-y-1 p-3">
-                    <p className="font-semibold text-gray-800 mb-1">
+                    <p className="font-semibold text-white-800 mb-1">
                         Momentum Score: {data.score}
                     </p>
-                    <p className="text-gray-500">
+                    <p className="text-white-500">
                         🗓 Meetings completed:{' '}
-                        <span className="font-medium text-gray-700">
+                        <span className="font-medium text-white-700">
                             {data.breakdown.meetingsCompleted}
                         </span>{' '}
                         (+{data.breakdown.meetingsCompleted * 2} pts)
                     </p>
-                    <p className="text-gray-500">
+                    <p className="text-white-500">
                         ✅ Actions approved:{' '}
-                        <span className="font-medium text-gray-700">
+                        <span className="font-medium text-white-700">
                             {data.breakdown.actionsApproved}
                         </span>{' '}
                         (+{data.breakdown.actionsApproved * 3} pts)
                     </p>
-                    <p className="text-gray-500">
+                    <p className="text-white-500">
                         📈 Deals progressed:{' '}
-                        <span className="font-medium text-gray-700">
+                        <span className="font-medium text-white-700">
                             {data.breakdown.dealsProgressed}
                         </span>{' '}
                         (+{data.breakdown.dealsProgressed * 5} pts)
                     </p>
-                    <p className="text-gray-400 text-[10px] pt-1 border-t border-gray-100">
+                    <p className="text-white-400 text-[10px] pt-1 border-t border-gray-100">
                         Based on last 7 days of activity
                     </p>
                 </TooltipContent>
