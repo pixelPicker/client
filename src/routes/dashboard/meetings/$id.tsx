@@ -6,7 +6,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '../../../components/ui/tooltip'
+import { toast } from '../../../hooks/useToast'
 import { useMeeting, useActions, useUpdateMeeting, useDeleteMeeting } from '../../../hooks/useMeetings'
+
+
 import { useState, useEffect } from 'react'
 import { api } from '../../../lib/api'
 import { Button } from '../../../components/ui/button'
@@ -72,10 +75,11 @@ function MeetingDetails() {
     if (window.confirm("Are you sure you want to delete this meeting? This action cannot be undone.")) {
       try {
         await deleteMeeting.mutateAsync(meeting._id);
+        toast.success("Meeting deleted successfully");
         navigate({ to: '/dashboard/calendar' });
       } catch (err) {
         console.error("Failed to delete meeting", err);
-        alert("Failed to delete meeting");
+        toast.error("Failed to delete meeting");
       }
     }
   }
@@ -107,7 +111,6 @@ function MeetingDetails() {
   // ... (handleAction function unchanged) ...
 
   const handleAction = async (actionId: string, type: 'approve' | 'reject') => {
-    // ... implementation ...
     if (!meeting) return;
     try {
       const getObjId = (obj: any) => (typeof obj === 'object' && obj !== null ? obj._id : obj);
@@ -145,13 +148,16 @@ function MeetingDetails() {
           method: 'POST',
           body: JSON.stringify({ actionId }),
         })
+        toast.success(`Action confirmed: "${action?.title || 'Action'}"`)
       } else {
+        const action = meetingActions.find(a => a._id === actionId);
         await api(`/action/${actionId}`, { method: 'DELETE' })
+        toast.info(`Action dismissed: "${action?.title || 'Action'}"`)
       }
       setMeetingActions((prev) => prev.filter((a) => a._id !== actionId))
     } catch (err) {
       console.error("Failed to process action", err)
-      alert("Failed to process action. Please try again.")
+      toast.error("Failed to process action. Please try again.")
     }
   }
 

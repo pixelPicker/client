@@ -1,6 +1,5 @@
 import { createFileRoute, Outlet, Link } from '@tanstack/react-router'
 import {
-  Bell,
   User,
   Calendar,
   Users,
@@ -31,7 +30,7 @@ function DashboardLayout() {
           <div className="mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16">
               <div className="flex-shrink-0 flex items-center">
-                <span className="text-xl font-bold text-gray-900 tracking-tight">
+                <span className="text-2xl font-bold text-gray-900 tracking-tight">
                   DealForge
                 </span>
               </div>
@@ -108,10 +107,7 @@ function DashboardLayout() {
               <div className="flex items-center space-x-3">
                 <MomentumBadge />
                 <LiveClock />
-                <button className="p-2 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500">
-                  <span className="sr-only">View notifications</span>
-                  <Bell className="h-6 w-6" />
-                </button>
+
                 <div className="relative ml-3">
                   <div className="flex items-center gap-3">
                     <button
